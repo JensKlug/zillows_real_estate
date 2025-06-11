@@ -29,7 +29,9 @@ class HouseFeatures(BaseModel):
     bed: float
     bath: float
     acre_lot: float
-    zip_code: int
+    zip_code: float
+    p_c_income: None
+    ppsf_zipcode: None
 
 @app.post("/predict")
 def predict(features: HouseFeatures):
