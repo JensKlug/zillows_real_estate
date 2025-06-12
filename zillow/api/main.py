@@ -1,22 +1,29 @@
+
+import sys
+import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from ml_logic.model import train_model, evaluate_model
-from ml_logic.preprocessor import preprocess_features
-from ml_logic.registry import save_model, load_model
+from zillow.ml_logic.model import train_model, evaluate_model
+from zillow.ml_logic.preprocessor import preprocess_features
+from zillow.ml_logic.registry import save_model, load_model
 import mlflow
 import joblib
-import os
+
+# Adjust path to include ml_logic location (two levels up from zillow/api/)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 # Load raw data globally
-house_df = pd.read_csv('../raw_data/realtor-data.csv')  # Adjust path as needed
+rootpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+house_df = pd.read_csv(f'{rootpath}/raw_data/realtor-data.csv')  # Path relative to zillow/api/
 
-def preprocess():
+def preprocess(house_df):
     """
     Preprocess the raw house data and save the cleaned dataset.
     """
     # Load and clean data
-    cleaned_house_df = preprocess_features(house_df)  # Needs adjustment, see below
+    cleaned_house_df, preprocessor = preprocess_features(house_df)
+
     output_path = os.path.join('../raw_data', f'cleaned_house_data_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv')
     if not os.path.exists('../raw_data'):
         os.makedirs('../raw_data')
@@ -24,7 +31,7 @@ def preprocess():
     print(f"✅ Preprocessed data saved to {output_path} with {len(cleaned_house_df)} rows")
     return cleaned_house_df
 
-def train():
+def train(cleaned_house_df):
     """
     Train the XGBoost model with GridSearchCV and log with MLflow.
     """
@@ -36,11 +43,11 @@ def train():
         X = cleaned_house_df.drop(columns=['price'])
         y = cleaned_house_df['price']
 
-        # Split data (since model.py expects X_train, y_train)
+        # Split data
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         # Train model
-        model, history = train_model(X_train, y_train)  # Pass training data
+        model, history = train_model(X_train, y_train)
 
         # Save the best model
         model_path = 'model/xgboost_best_model.pkl'
@@ -49,9 +56,9 @@ def train():
         print(f"✅ Model trained and saved to {model_path}")
         return model
 
-def evaluate():
+def evaluate(cleaned_house_df,model):
     """
-    Evaluate the trained model on the full dataset.
+    Evaluate the trained model on the test dataset.
     """
     # Load the trained model
     model = load_model('model/xgboost_best_model.pkl')
@@ -59,9 +66,10 @@ def evaluate():
     # Prepare data for evaluation
     X = cleaned_house_df.drop(columns=['price'])
     y = cleaned_house_df['price']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Evaluate
-    metrics = evaluate_model(model, X, y)
+    metrics = evaluate_model(model, X_test, y_test)
     rmse = metrics['rmse']
     mae = metrics['mae']
     r2 = metrics['r2']
@@ -90,8 +98,7 @@ if __name__ == '__main__':
         os.makedirs('../raw_data')
 
     # Execute the workflow
-    cleaned_house_df = preprocess()
-    model = train()
-    metrics = evaluate()
-    sample_input = {"bed": 3, "bath": 2, "acre_lot": 0.5, "house_size": 2000, "ppsf_zipcode": 300, "zip_code": "90210"}
-    prediction = pred(sample_input)
+    cleaned_house_df = preprocess(house_df)
+    model = train(cleaned_house_df)
+    metrics = evaluate(cleaned_house_df,model)
+    prediction = pred(X_pred)
