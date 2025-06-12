@@ -30,7 +30,7 @@ app.add_middleware(
 def root():
     return {"message": "Welcome to the House Price Predictor!"}
 
-
+# Price Estimate according to Real Estate Basic data.
 class HouseFeatures(BaseModel):
     house_size: float
     bed: float
@@ -61,4 +61,16 @@ def predict(features: HouseFeatures):
         missing_cols = e.args[0]
         raise HTTPException(status_code=400, detail=f"Missing column(s): {missing_cols}")
 
+    return {"predicted_price": round(float(prediction), 2)}
+
+
+# Trend Estimate for ZIP_CODE:
+class ZIP_CODE(BaseModel):
+    time_horizon: int # 3 months, 6 months, 12 months
+    zip_code: int
+
+@app.post("/predict")
+def predict_investment(features: ZIP_CODE):
+    input_df = pd.DataFrame([features.model_dump()])
+    prediction = model.predict(input_df)[0]
     return {"predicted_price": round(float(prediction), 2)}

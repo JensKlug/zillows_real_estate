@@ -26,12 +26,14 @@ def preprocess_features(input_df: pd.DataFrame) -> np.ndarray:
     # Define numerical scaler transformer
     preprocessor = ColumnTransformer(
         transformers=[
-            ('num', StandardScaler(), features)
+        ('std', StandardScaler(), ['latitude', 'longitude']),
+        ('rob', RobustScaler(), ['bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode'])
         ],
-        remainder='drop'
-    )
+        remainder='passthrough'
+        )
 
     # Fit and transform input dataframe (stateless for inference, so just transform)
     X_processed = preprocessor.fit_transform(df)
-
-    return X_processed
+    print("✅ X_processed, with shape", X_processed.shape)
+    
+    return X_processes
