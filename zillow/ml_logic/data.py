@@ -27,9 +27,6 @@ def load_data():
     unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
     house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
 
-    return clean_data(house_df)
-
-
 
 def clean_data(df):
     # Drop columns 'brokered_by', 'status'
@@ -96,6 +93,7 @@ def clean_data(df):
 
     return df
 
+
 def create_zip_dict(df):
     # Create the dictionary from the DataFrame
     zip_dict = df.drop_duplicates(subset="zip_code").set_index("zip_code")[["p_c_income", "ppsf_zipcode"]].to_dict(orient="index")
@@ -116,3 +114,4 @@ def create_zip_dict(df):
 
 # # Filter house_df by unique_zipcoes_area_df
 # house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
+
