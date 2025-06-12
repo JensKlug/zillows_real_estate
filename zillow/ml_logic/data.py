@@ -27,6 +27,8 @@ def load_data():
     unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
     house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
 
+    return house_df
+
 
 def clean_data(df):
     # Drop columns 'brokered_by', 'status'
@@ -57,14 +59,17 @@ def clean_data(df):
     df['house_size'] = df['house_size'].fillna(df['house_size'].median())
     df['acre_lot'] = df['acre_lot'].fillna(0)
 
-    # Step 2: Calculate PPSF for each row
+    # Calculate PPSF for each row
     df['ppsf'] = round(df['price'] / df['house_size'], 2)
 
-    # Step 3: Calculate median PPSF per zip_code
+    # Calculate median PPSF per zip_code
     ppsf_median = df.groupby('zip_code')['ppsf'].median().reset_index(name='ppsf_zipcode')
 
-    # Step 4: Merge median PPSF back to df
+    # Merge median PPSF back to df
     df = df.merge(ppsf_median, on='zip_code', how='left')
+
+    # Convert zipcode to int
+    df['zip_code'] = df['zip_code'].astype(int)
 
     # Drop temporary ppsf column
     df = df.drop(columns=['ppsf'])
@@ -95,23 +100,38 @@ def clean_data(df):
 
 
 def create_zip_dict(df):
-    # Create the dictionary from the DataFrame
-    zip_dict = df.drop_duplicates(subset="zip_code").set_index("zip_code")[["p_c_income", "ppsf_zipcode"]].to_dict(orient="index")
+    """
+    Create a dictionary mapping zip codes to a single ppsf_zipcode value.
+    Example: {12345: 210.5, 67890: 198.3}
+    """
+    zip_dict = (
+        df.drop_duplicates(subset="zip_code")
+          .set_index("zip_code")[["ppsf_zipcode"]]
+          .to_dict(orient="index")
+    )
 
-    # Convert inner dicts to lists
-    zip_dict = {zip_code: [values["p_c_income"], values["ppsf_zipcode"]] for zip_code, values in zip_dict.items()}
+    zip_dict = {
+        zip_code: values["ppsf_zipcode"]  # remove the [ ] list wrapping
+        for zip_code, values in zip_dict.items()
+    }
 
     return zip_dict
 
-# # Read HouseTS.csv into area_df
-# area_df = pd.read_csv('../raw_data/HouseTS.csv')
+def prepare_user_input(user_input: dict, zip_dict: dict) -> pd.DataFrame:
+    """
+    user_input: e.g. {'bed': 3, 'bath': 2, 'acre_lot': 0.25, 'zip_code': 12345, 'house_size': 1800}
+    ppsf_zip_dict: {12345: [210.5], 67890: [198.3], ...}
+    default_ppsf: fallback value if zip_code not found
+    """
+    ppsf = zip_dict.get(user_input['zip_code'])
 
-# # Read realtor-data.csv into house_df
-# house_df = pd.read_csv('../raw_data/realtor-data.csv')
+    # Build dataframe for model input, replacing zip_code by ppsf_zipcode
+    data = {
+        'bed': user_input['bed'],
+        'bath': user_input['bath'],
+        'acre_lot': user_input['acre_lot'],
+        'house_size': user_input['house_size'],
+        'ppsf_zipcode': ppsf,
+    }
 
-# # Create list of unique zipcodes in area_df
-# unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
-
-# # Filter house_df by unique_zipcoes_area_df
-# house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
-
+    return pd.DataFrame([data])

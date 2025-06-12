@@ -3,13 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 from zillow.ml_logic.load_model import load_model
-from zillow.ml_logic.data import load_data, create_zip_dict
+from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input
 
 # Load cleaned data
-cleaned_df = load_data()
+data_df = load_data()
+cleaned_data_df = clean_data(data_df)
 
 # Create zip_dict at startup
-zip_dict = create_zip_dict(cleaned_df)
+zip_dict = create_zip_dict(cleaned_data_df)
 
 app = FastAPI()
 
@@ -35,7 +36,7 @@ class HouseFeatures(BaseModel):
     bed: float
     bath: float
     acre_lot: float
-    zip_code: float
+    zip_code: int
 
 @app.post("/predict")
 def predict(features: HouseFeatures):
@@ -47,14 +48,17 @@ def predict(features: HouseFeatures):
     if zip_code not in zip_dict:
         return {"error": f"Zip code {zip_code} not found in zip_dict"}
 
-    # Add looked-up values to input data
-    data["p_c_income"] = zip_dict[zip_code][0]
-    data["ppsf_zipcode"] = zip_dict[zip_code][1]
-
     # Create DataFrame with all required model features
-    input_df = pd.DataFrame([data])
+    input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
 
-    # Predict
-    prediction = model.predict(input_df)[0]
+    # # Predict
+    # prediction = model.predict(input_df)[0]
+    print("Input DataFrame:\n", input_df)  # <-- Debug print
+
+    try:
+        prediction = model.predict(input_df)[0]
+    except KeyError as e:
+        missing_cols = e.args[0]
+        raise HTTPException(status_code=400, detail=f"Missing column(s): {missing_cols}")
 
     return {"predicted_price": round(float(prediction), 2)}
