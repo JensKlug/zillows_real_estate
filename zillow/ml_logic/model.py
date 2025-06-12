@@ -1,6 +1,6 @@
 #def initialize_model() #deeplearning
 #def compile_model() #deeplearning
-def train_model():
+def train_model(X_train, y_train, param_grid=None, cv=5):
     # 6. Create pipeline with XGBoost
     pipeline = Pipeline([
     ('preprocessor', preprocessor),
@@ -27,14 +27,14 @@ def train_model():
 
     # 9. Fit the model
     grid_search.fit(X_train, y_train)
+
+
     # Log to MLflow
     best_model = grid_search.best_estimator_
     mlflow.log_params(grid_search.best_params_)
-    y_pred = best_model.predict(X)
-    rmse = np.sqrt(mean_squared_error(y, y_pred))
-    mlflow.log_metrics({"rmse": rmse})
+    # Note: Logging metrics (e.g., RMSE) moved to evaluate() - see feedback
 
-    print(f"✅ Model trained on {len(X)} rows with best parameters: {grid_search.best_params_}")
+    print(f"✅ Model trained on {len(X_train)} rows with best parameters: {grid_search.best_params_}")
     print(f"Min cross-validated RMSE: ${np.sqrt(-grid_search.best_score_):,.2f}")
 
     return best_model, grid_search
@@ -59,3 +59,10 @@ def evaluate_model(model, X, y, batch_size=64):
     print(f"✅ Model evaluated, RMSE: ${rmse:,.2f}, MAE: ${mae:,.2f}, R²: {r2:.4f}")
 
     return {"rmse": rmse, "mae": mae, "r2": r2}
+
+# # Log to MLflow
+#     best_model = grid_search.best_estimator_
+#     mlflow.log_params(grid_search.best_params_)
+#     y_pred = best_model.predict(X)
+#     rmse = np.sqrt(mean_squared_error(y, y_pred))
+#     mlflow.log_metrics({"rmse": rmse})

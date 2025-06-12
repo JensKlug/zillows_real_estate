@@ -34,12 +34,13 @@ def load_model(stage="Production"):
 
 
 
-# import os
-# import joblib
-
-# def save_model(model, path="model/xgboost_best_model.pkl"):
-#     os.makedirs(os.path.dirname(path), exist_ok=True)
-#     joblib.dump(model, path)
-
+def save_model(model, path="model/xgboost_best_model.pkl"):
+    """
+    Save the trained model to a specified path and log the action.
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    joblib.dump(model, path)
+    print(Fore.GREEN + f"✅ Model saved to {path}" + Style.RESET_ALL)
+    return path
 # def load_model(path="model/xgboost_best_model.pkl"):
 #     return joblib.load(path)
