@@ -15,8 +15,12 @@ from datetime import datetime
 
 
 def load_data():
-    base_dir = os.path.dirname(os.path.abspath(__file__))  # .../zillow/ml_logic
-    raw_data_dir = os.path.abspath(os.path.join(base_dir, '..', '..', 'raw_data'))
+    # Always get the directory of the *current script file*
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Go up two levels to reach the root project directory
+    project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
+    raw_data_dir = os.path.join(project_root, 'raw_data')
 
     area_path = os.path.join(raw_data_dir, 'HouseTS.csv')
     house_path = os.path.join(raw_data_dir, 'realtor-data.csv')
@@ -24,10 +28,15 @@ def load_data():
     area_df = pd.read_csv(area_path)
     house_df = pd.read_csv(house_path)
 
+    # Filter house_df by available zipcodes in area_df
     unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
     house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
 
     return house_df
+
+
+
+
 
 
 def clean_data(df):
@@ -101,40 +110,47 @@ def clean_data(df):
 
 def create_zip_dict(df):
     """
-    Create a dictionary mapping zip codes to a single ppsf_zipcode value.
-    Example: {12345: 210.5, 67890: 198.3}
+    Create a dictionary mapping zip codes to a dict of 'ppsf_zipcode', 'longitude', and 'latitude'.
+    Example:
+        {
+            12345: {"ppsf_zipcode": 210.5, "longitude": -73.99, "latitude": 40.75},
+            67890: {"ppsf_zipcode": 198.3, "longitude": -74.01, "latitude": 40.78}
+        }
     """
-    zip_dict = (
-        df.drop_duplicates(subset="zip_code")
-          .set_index("zip_code")[["ppsf_zipcode"]]
-          .to_dict(orient="index")
-    )
+    # Select the needed columns and drop duplicates by zip_code
+    zip_df = df.drop_duplicates(subset="zip_code")[["zip_code", "ppsf_zipcode", "longitude", "latitude"]]
 
-    zip_dict = {
-        zip_code: values["ppsf_zipcode"]  # remove the [ ] list wrapping
-        for zip_code, values in zip_dict.items()
-    }
+    # Set zip_code as index and convert to dict of dicts
+    zip_dict = zip_df.set_index("zip_code").to_dict(orient="index")
 
     return zip_dict
 
 def prepare_user_input(user_input: dict, zip_dict: dict) -> pd.DataFrame:
     """
-    user_input: e.g. {'bed': 3, 'bath': 2, 'acre_lot': 0.25, 'zip_code': 12345, 'house_size': 1800}
-    ppsf_zip_dict: {12345: [210.5], 67890: [198.3], ...}
-    default_ppsf: fallback value if zip_code not found
-    """
-    ppsf = zip_dict.get(user_input['zip_code'])
+    Prepare user input dict into a DataFrame for prediction,
+    replacing 'zip_code' with 'ppsf_zipcode', 'longitude', and 'latitude' from zip_dict.
 
-    # Build dataframe for model input, replacing zip_code by ppsf_zipcode
+    Args:
+        user_input: Dictionary with keys like 'bed', 'bath', 'acre_lot', 'zip_code', 'house_size'.
+        zip_dict: Dictionary mapping zip_code to dict of {'ppsf_zipcode', 'longitude', 'latitude'}.
+
+    Returns:
+        pd.DataFrame: Single-row DataFrame ready for model input.
+    """
+    zip_info = zip_dict.get(user_input['zip_code'])
+
     data = {
         'bed': user_input['bed'],
         'bath': user_input['bath'],
         'acre_lot': user_input['acre_lot'],
         'house_size': user_input['house_size'],
-        'ppsf_zipcode': ppsf,
+        'ppsf_zipcode': zip_info.get('ppsf_zipcode'),
+        'longitude': zip_info.get('longitude'),
+        'latitude': zip_info.get('latitude'),
     }
 
     return pd.DataFrame([data])
+
 
 def convert_zipcode(df):
     # Convert zip_code column to 5-digit string
@@ -164,8 +180,5 @@ def convert_zipcode(df):
     coords_dict = zip_coords.set_index('zip_code')[['latitude', 'longitude']].to_dict('index')
     df['latitude'] = df['zip_code'].map(lambda x: coords_dict.get(x, {}).get('latitude'))
     df['longitude'] = df['zip_code'].map(lambda x: coords_dict.get(x, {}).get('longitude'))
-
-    # Drop 'zip_code' column
-    df = df.drop(columns=['zip_code'])
 
     return df

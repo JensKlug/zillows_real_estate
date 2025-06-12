@@ -1,5 +1,5 @@
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler
 import pandas as pd
 import numpy as np
 
@@ -35,5 +35,5 @@ def preprocess_features(input_df: pd.DataFrame) -> np.ndarray:
     # Fit and transform input dataframe (stateless for inference, so just transform)
     X_processed = preprocessor.fit_transform(df)
     print("✅ X_processed, with shape", X_processed.shape)
-    
-    return X_processes
+
+    return X_processed
