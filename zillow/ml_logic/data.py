@@ -13,17 +13,23 @@ import joblib
 import os
 from datetime import datetime
 
-# Read HouseTS.csv into area_df
-area_df = pd.read_csv('../raw_data/HouseTS.csv')
 
-# Read realtor-data.csv into house_df
-house_df = pd.read_csv('../raw_data/realtor-data.csv')
+def load_data():
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # .../zillow/ml_logic
+    raw_data_dir = os.path.abspath(os.path.join(base_dir, '..', '..', 'raw_data'))
 
-# Create list of unique zipcodes in area_df
-unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
+    area_path = os.path.join(raw_data_dir, 'HouseTS.csv')
+    house_path = os.path.join(raw_data_dir, 'realtor-data.csv')
 
-# Filter house_df by unique_zipcoes_area_df
-house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
+    area_df = pd.read_csv(area_path)
+    house_df = pd.read_csv(house_path)
+
+    unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
+    house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
+
+    return clean_data(house_df)
+
+
 
 def clean_data(df):
     # Drop columns 'brokered_by', 'status'
@@ -89,3 +95,24 @@ def clean_data(df):
         ]
 
     return df
+
+def create_zip_dict(df):
+    # Create the dictionary from the DataFrame
+    zip_dict = df.drop_duplicates(subset="zip_code").set_index("zip_code")[["p_c_income", "ppsf_zipcode"]].to_dict(orient="index")
+
+    # Convert inner dicts to lists
+    zip_dict = {zip_code: [values["p_c_income"], values["ppsf_zipcode"]] for zip_code, values in zip_dict.items()}
+
+    return zip_dict
+
+# # Read HouseTS.csv into area_df
+# area_df = pd.read_csv('../raw_data/HouseTS.csv')
+
+# # Read realtor-data.csv into house_df
+# house_df = pd.read_csv('../raw_data/realtor-data.csv')
+
+# # Create list of unique zipcodes in area_df
+# unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
+
+# # Filter house_df by unique_zipcoes_area_df
+# house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
