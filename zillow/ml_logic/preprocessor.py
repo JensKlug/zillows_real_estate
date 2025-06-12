@@ -2,6 +2,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, RobustScaler
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
 
 def preprocess_features(input_df: pd.DataFrame) -> np.ndarray:
     """
@@ -29,7 +32,7 @@ def preprocess_features(input_df: pd.DataFrame) -> np.ndarray:
         ('std', StandardScaler(), ['latitude', 'longitude']),
         ('rob', RobustScaler(), ['bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode'])
         ],
-        remainder='passthrough'
+        remainder='drop'
         )
 
     # Fit and transform input dataframe (stateless for inference, so just transform)

@@ -9,25 +9,41 @@ from zillow.ml_logic.preprocessor import preprocess_features
 from zillow.ml_logic.registry import save_model, load_model
 import mlflow
 import joblib
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
+from zillow.ml_logic.data import load_data, clean_data,convert_zipcode
 
 # Adjust path to include ml_logic location (two levels up from zillow/api/)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-# Load raw data globally
-rootpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-house_df = pd.read_csv(f'{rootpath}/raw_data/realtor-data.csv')  # Path relative to zillow/api/
+# # Load raw data globally
+# rootpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+# house_df = pd.read_csv(f'{rootpath}/raw_data/realtor-data.csv')  # Path relative to zillow/api/
+# #calling data functions
 
+house_df = load_data()
+house_df = clean_data(house_df)
+house_df = convert_zipcode(house_df)
 def preprocess(house_df):
     """
-    Preprocess the raw house data and save the cleaned dataset.
+    Preprocess the raw house data with scaling and save the cleaned dataset.
     """
-    # Load and clean data
-    cleaned_house_df, preprocessor = preprocess_features(house_df)
+    # Scale data with preprocess_features
+    cleaned_house_df = preprocess_features(house_df)
 
+    # Define output path with timestamp
     output_path = os.path.join('../raw_data', f'cleaned_house_data_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.csv')
     if not os.path.exists('../raw_data'):
         os.makedirs('../raw_data')
-    pd.DataFrame(cleaned_house_df, columns=['bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode', 'zip_code']).to_csv(output_path, index=False)
+
+    # Reconstruct DataFrame with all scaled columns
+    columns = ['latitude', 'longitude', 'bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode']
+    cleaned_house_df = pd.DataFrame(cleaned_house_df, columns=columns)
+    cleaned_house_df['price'] = house_df['price']  # Reattach price
+
+    # Save to CSV
+    cleaned_house_df.to_csv(output_path, index=False)
     print(f"✅ Preprocessed data saved to {output_path} with {len(cleaned_house_df)} rows")
     return cleaned_house_df
 
