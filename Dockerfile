@@ -1,19 +1,22 @@
-# Use a lightweight Python image
+# Use official lightweight Python image
 FROM python:3.10.6-buster
 
-# Set the working directory in the container
+# Set working directory in container
 WORKDIR /app
 
-# Copy everything except what's in .dockerignore
-COPY . /app
+# Copy only requirements first to leverage Docker cache
+COPY requirements.txt .
 
 # Upgrade pip and install dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Set the port
+# Copy rest of the app source code
+COPY . .
+
+# Expose port (default 8000)
 ENV PORT=8000
 EXPOSE $PORT
 
-# Start the FastAPI app (adjust path if needed)
-CMD ["sh", "-c", "uvicorn zillow.api.fast:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Start FastAPI app with uvicorn
+CMD ["uvicorn", "zillow.api.fast:app", "--host", "0.0.0.0", "--port", "8000"]
