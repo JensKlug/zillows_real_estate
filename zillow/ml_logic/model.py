@@ -66,3 +66,4 @@ def evaluate_model(model, X, y, batch_size=64):
 #     y_pred = best_model.predict(X)
 #     rmse = np.sqrt(mean_squared_error(y, y_pred))
 #     mlflow.log_metrics({"rmse": rmse})
+print("test")
