@@ -98,7 +98,39 @@ def clean_data(df):
 
     return df
 
+def convert_zipcode(df):
+    # Convert zip_code column to 5-digit string
+    df['zip_code'] = df['zip_code'].astype(str).str.replace('\.0$', '', regex=True).str.zfill(5)
 
+    # Get unique zip codes
+    unique_zips = df['zip_code'].unique()
+
+    # Initialize pgeocode for US
+    nomi = pgeocode.Nominatim('us')
+
+    # Function to get coordinates
+    def get_coordinates(zip_code):
+        try:
+            result = nomi.query_postal_code(zip_code)
+            if result.empty or pd.isna(result.latitude):
+                return pd.Series([None, None])
+            return pd.Series([result.latitude, result.longitude])
+        except:
+            return pd.Series([None, None])
+
+    # Create DataFrame for unique zip codes
+    zip_coords = pd.DataFrame(unique_zips, columns=['zip_code'])
+    zip_coords[['latitude', 'longitude']] = zip_coords.apply(lambda row: get_coordinates(row['zip_code']), axis=1)
+
+    # Map coordinates back to filtered_house_df
+    coords_dict = zip_coords.set_index('zip_code')[['latitude', 'longitude']].to_dict('index')
+    df['latitude'] = df['zip_code'].map(lambda x: coords_dict.get(x, {}).get('latitude'))
+    df['longitude'] = df['zip_code'].map(lambda x: coords_dict.get(x, {}).get('longitude'))
+
+    # Drop 'zip_code' column
+    df = df.drop(columns=['zip_code'])
+
+    return df
 def create_zip_dict(df):
     """
     Create a dictionary mapping zip codes to a single ppsf_zipcode value.
