@@ -6,32 +6,37 @@ from colorama import Fore, Style
 
 from zillow.params import MODEL_TARGET, LOCAL_REGISTRY_PATH
 
-def load_model(stage="Production"):
+import os
+import joblib
+from pathlib import Path
+
+def load_model(model_path=None):
     """
-    Return a saved model from the local registry using joblib.
+    Load the trained XGBoost model from a specified path or the default registry location.
+
+    Args:
+        model_path (str, optional): Path to the model file. If None, uses the default local registry path.
+
+    Returns:
+        model: Loaded XGBoost model, or None if not found.
     """
+    # Default registry path if not specified
+    if model_path is None:
+        local_registry = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'model')
+        model_path = os.path.join(local_registry, 'xgboost_best_model.pkl')
 
-    if MODEL_TARGET == "local":
-        print(Fore.YELLOW + f"📁 LOCAL_REGISTRY_PATH is: {LOCAL_REGISTRY_PATH}" + Style.RESET_ALL)
+    # Check if the path exists
+    if not os.path.exists(model_path):
+        print(f"❌ No model found at {model_path}")
+        return None
 
-        print(Fore.BLUE + f"\n🔍 Loading latest model from local registry..." + Style.RESET_ALL)
-
-        local_model_directory = os.path.join(LOCAL_REGISTRY_PATH, "models")
-        local_model_paths = glob.glob(f"{local_model_directory}/*.joblib")
-
-        if not local_model_paths:
-            print("❌ No model found in local registry.")
-            return None
-
-        most_recent_model_path_on_disk = sorted(local_model_paths)[-1]
-
-        print(Fore.BLUE + f"📦 Loading model from: {most_recent_model_path_on_disk}" + Style.RESET_ALL)
-
-        model = joblib.load(most_recent_model_path_on_disk)
-
-        print("✅ Model successfully loaded from disk.")
+    try:
+        model = joblib.load(model_path)
+        print(f"✅ Model loaded from {model_path}")
         return model
-
+    except Exception as e:
+        print(f"❌ Error loading model from {model_path}: {str(e)}")
+        return None
 
 
 def save_model(model, path="model/xgboost_best_model.pkl"):

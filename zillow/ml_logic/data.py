@@ -68,17 +68,26 @@ def clean_data(df):
     df['house_size'] = df['house_size'].fillna(df['house_size'].median())
     df['acre_lot'] = df['acre_lot'].fillna(0)
 
-    # Calculate PPSF for each row
-    df['ppsf'] = round(df['price'] / df['house_size'], 2)
-
-    # Calculate median PPSF per zip_code
+    # Calculate PPSF
+    df['ppsf'] = np.where(df['house_size'] > 0, round(df['price'] / df['house_size'], 2), 0)  # Avoid div by zero
     ppsf_median = df.groupby('zip_code')['ppsf'].median().reset_index(name='ppsf_zipcode')
-
-    # Merge median PPSF back to df
     df = df.merge(ppsf_median, on='zip_code', how='left')
+
+
+    # # Calculate PPSF for each row
+    # df['ppsf'] = round(df['price'] / df['house_size'], 2)
+
+    # # Calculate median PPSF per zip_code
+    # ppsf_median = df.groupby('zip_code')['ppsf'].median().reset_index(name='ppsf_zipcode')
+
+    # # Merge median PPSF back to df
+    # df = df.merge(ppsf_median, on='zip_code', how='left')
 
     # Convert zipcode into longitude and latitude
     df = convert_zipcode(df)
+    df = df.dropna(subset=['latitude', 'longitude'])
+
+
 
     # Drop temporary ppsf column
     df = df.drop(columns=['ppsf'])

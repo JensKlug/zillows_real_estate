@@ -22,9 +22,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 # house_df = pd.read_csv(f'{rootpath}/raw_data/realtor-data.csv')  # Path relative to zillow/api/
 # #calling data functions
 
-house_df = load_data()
-house_df = clean_data(house_df)
-house_df = convert_zipcode(house_df)
+
 print("test")
 def preprocess(house_df):
     """
@@ -52,41 +50,49 @@ def train(cleaned_house_df):
     """
     Train the XGBoost model with GridSearchCV and log with MLflow.
     """
-    mlflow.set_tracking_uri("http://localhost:5000")
-    mlflow.set_experiment("zillow_price_training")
+    # mlflow.set_tracking_uri("http://localhost:5000")
+    # mlflow.set_experiment("zillow_price_training")
 
-    with mlflow.start_run():
-        # Prepare data
-        X = cleaned_house_df.drop(columns=['price'])
-        y = cleaned_house_df['price']
+    # with mlflow.start_run():
 
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Prepare data
+    X = cleaned_house_df.drop(columns=['price'])
+    y = cleaned_house_df['price']
 
-        # Train model
-        model, history = train_model(X_train, y_train)
+    print(f"y stats before split: NaN = {y.isna().sum()}, inf = {np.isinf(y).sum()}, max = {y.max()}, min = {y.min()}")
 
-        # Save the best model
-        model_path = 'model/xgboost_best_model.pkl'
-        save_model(model, model_path)
-        mlflow.log_artifact(model_path)
-        print(f"✅ Model trained and saved to {model_path}")
-        return model
 
-def evaluate(cleaned_house_df,model):
+    mask = ~y.isna()
+    X = X[mask]
+    y = y[mask]
+
+    print(f"y stats after NaN removal: NaN = {y.isna().sum()}, inf = {np.isinf(y).sum()}, max = {y.max()}, min = {y.min()}")
+
+
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    print(f"y_train stats: NaN = {y_train.isna().sum()}, inf = {np.isinf(y_train).sum()}, max = {y_train.max()}, min = {y_train.min()}")
+
+    # Train model
+    model, history = train_model(X_train, y_train)
+
+    # Save the best model
+    model_path = 'model/xgboost_best_model.pkl'
+    save_model(model, model_path)
+    # mlflow.log_artifact(model_path)
+    print(f"✅ Model trained and saved to {model_path}")
+    return model, X_test, y_test
+
+def evaluate(X_test,y_test,model):
     """
     Evaluate the trained model on the test dataset.
     """
-    # Load the trained model
-    model = load_model('model/xgboost_best_model.pkl')
-
-    # Prepare data for evaluation
-    X = cleaned_house_df.drop(columns=['price'])
-    y = cleaned_house_df['price']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
     # Evaluate
     metrics = evaluate_model(model, X_test, y_test)
+    if metrics is None:
+        print("❌ Evaluation failed, no metrics returned")
+        return None
     rmse = metrics['rmse']
     mae = metrics['mae']
     r2 = metrics['r2']
@@ -115,7 +121,20 @@ if __name__ == '__main__':
         os.makedirs('../raw_data')
 
     # Execute the workflow
+    house_df = load_data()
+    house_df = clean_data(house_df)
+    house_df = convert_zipcode(house_df)
     cleaned_house_df = preprocess(house_df)
-    model = train(cleaned_house_df)
-    metrics = evaluate(cleaned_house_df,model)
-    prediction = pred(X_pred)
+    model, X_test, y_test = train(cleaned_house_df)
+    metrics = evaluate(X_test,y_test,model)
+
+    sample_input = {
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "bed": 3,
+    "bath": 2,
+    "acre_lot": 0.5,
+    "house_size": 2000,
+    "ppsf_zipcode": 300,
+    }
+    prediction = pred(sample_input)
