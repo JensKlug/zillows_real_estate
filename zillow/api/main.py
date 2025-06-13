@@ -107,7 +107,7 @@ def pred(input_data):
     model = load_model('model/xgboost_best_model.pkl')
 
     # Prepare input data as a DataFrame
-    columns = ['bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode', 'zip_code']
+    columns = ['latitude', 'longitude', 'bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode']
     input_df = pd.DataFrame([input_data], columns=columns)
 
     # Predict
