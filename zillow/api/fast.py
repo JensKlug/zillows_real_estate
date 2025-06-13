@@ -1,3 +1,4 @@
+import traceback
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -50,17 +51,20 @@ def predict(features: HouseFeatures):
 
     zip_code = data["zip_code"]
     if zip_code not in zip_dict:
-        return {"error": f"Zip code {zip_code} not found in zip_dict"}
+        raise HTTPException(status_code=400, detail=f"Zip code {zip_code} not found in zip_dict")
 
     input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
 
-    print("Input DataFrame:\n", input_df)  # Debug print
+    print("Input DataFrame (before reordering):\n", input_df)
 
     try:
+        input_df = input_df[model.feature_names_in_]  # Ensure correct column order
+        print("Reordered DataFrame:\n", input_df)
         prediction = model.predict(input_df)[0]
+        print("Prediction:", prediction)
     except Exception as e:
-        print("Prediction error:", e)
-        traceback.print_exc()  # Print full traceback to console logs
+        import traceback
+        traceback.print_exc()  # 👈 shows full stack trace in logs
         raise HTTPException(status_code=500, detail="Internal server error during prediction")
 
     return {"predicted_price": round(float(prediction), 2)}

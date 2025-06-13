@@ -45,10 +45,6 @@ def train(cleaned_house_df):
     """
     Train the XGBoost model with GridSearchCV and log with MLflow.
     """
-    # mlflow.set_tracking_uri("http://localhost:5000")
-    # mlflow.set_experiment("zillow_price_training")
-
-    # with mlflow.start_run():
 
     # Prepare data
     X = cleaned_house_df.drop(columns=['price'])
