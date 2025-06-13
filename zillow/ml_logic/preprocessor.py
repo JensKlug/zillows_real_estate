@@ -40,4 +40,3 @@ def preprocess_features(input_df: pd.DataFrame) -> np.ndarray:
     print("✅ X_processed, with shape", X_processed.shape)
 
     return X_processed
-print("test")

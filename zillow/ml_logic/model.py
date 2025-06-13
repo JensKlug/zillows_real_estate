@@ -1,23 +1,36 @@
-#def initialize_model() #deeplearning
-#def compile_model() #deeplearning
+import sys
+import os
+import pandas as pd
+import numpy as np
+from sklearn.metrics import r2_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import train_test_split
+import mlflow
+import joblib
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.pipeline import Pipeline
+from xgboost import XGBRegressor
+from zillow.ml_logic.data import load_data, clean_data,convert_zipcode
+
 def train_model(X_train, y_train, param_grid=None, cv=5):
-    # 6. Create pipeline with XGBoost
-    pipeline = Pipeline([
-    ('preprocessor', preprocessor),
-    ('regressor', XGBRegressor(random_state=42, n_jobs=-1))
-    ])
+
+    # 6.define the model XGBoost
+
+    regressor = XGBRegressor(random_state=42, n_jobs=-1)
+
 
     # 7. Define hyperparameter grid for GridSearchCV
     param_grid = {
-        'regressor__n_estimators': [100, 200],  # Number of trees
-        'regressor__learning_rate': [0.01, 0.1],  # Step size for boosting
-        'regressor__max_depth': [3, 5],  # Depth of trees
-        'regressor__min_child_weight': [1, 3]  # Minimum sum of instance weight needed in a child
+        'n_estimators': [100, 200],  # Number of trees
+        'learning_rate': [0.01, 0.1],  # Step size for boosting
+        'max_depth': [3, 5],  # Depth of trees
+        'min_child_weight': [1, 3]  # Minimum sum of instance weight needed in a child
     }
 
     # 8. Perform GridSearchCV
     grid_search = GridSearchCV(
-        pipeline,
+        regressor,
         param_grid,
         cv=5,  # 3-fold cross-validation
         scoring='neg_mean_squared_error',
@@ -31,7 +44,7 @@ def train_model(X_train, y_train, param_grid=None, cv=5):
 
     # Log to MLflow
     best_model = grid_search.best_estimator_
-    mlflow.log_params(grid_search.best_params_)
+    # mlflow.log_params(grid_search.best_params_)
     # Note: Logging metrics (e.g., RMSE) moved to evaluate() - see feedback
 
     print(f"✅ Model trained on {len(X_train)} rows with best parameters: {grid_search.best_params_}")
@@ -66,4 +79,3 @@ def evaluate_model(model, X, y, batch_size=64):
 #     y_pred = best_model.predict(X)
 #     rmse = np.sqrt(mean_squared_error(y, y_pred))
 #     mlflow.log_metrics({"rmse": rmse})
-print("test")
