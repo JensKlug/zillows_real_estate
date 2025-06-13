@@ -25,6 +25,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 house_df = load_data()
 house_df = clean_data(house_df)
 house_df = convert_zipcode(house_df)
+print("test")
 def preprocess(house_df):
     """
     Preprocess the raw house data with scaling and save the cleaned dataset.

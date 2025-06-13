@@ -44,3 +44,4 @@ def save_model(model, path="model/xgboost_best_model.pkl"):
     return path
 # def load_model(path="model/xgboost_best_model.pkl"):
 #     return joblib.load(path)
+print("test")
