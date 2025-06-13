@@ -149,14 +149,14 @@ def prepare_user_input(user_input: dict, zip_dict: dict) -> pd.DataFrame:
     zip_info = zip_dict.get(user_input['zip_code'])
 
     data = {
-        'bed': user_input['bed'],
-        'bath': user_input['bath'],
-        'acre_lot': user_input['acre_lot'],
-        'house_size': user_input['house_size'],
-        'ppsf_zipcode': zip_info.get('ppsf_zipcode'),
-        'longitude': zip_info.get('longitude'),
-        'latitude': zip_info.get('latitude'),
-    }
+    'latitude': zip_info.get('latitude'),
+    'longitude': zip_info.get('longitude'),
+    'bed': user_input['bed'],
+    'bath': user_input['bath'],
+    'acre_lot': user_input['acre_lot'],
+    'house_size': user_input['house_size'],
+    'ppsf_zipcode': zip_info.get('ppsf_zipcode'),
+}
 
     return pd.DataFrame([data])
 

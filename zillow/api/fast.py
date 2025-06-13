@@ -21,7 +21,8 @@ app = FastAPI()
 
 model = load_model()
 if model is None:
-    raise RuntimeError("❌ Could not load model.")
+    #raise RuntimeError("❌ Could not load model.")
+    print("⚠️ Model not found. API will respond with errors for prediction endpoints.")
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,7 +48,7 @@ class HouseFeatures(BaseModel):
 def predict(features: HouseFeatures):
     data = features.model_dump()
 
-    zip_code = data["zip_code"]  # No conversion to int
+    zip_code = data["zip_code"]
     if zip_code not in zip_dict:
         return {"error": f"Zip code {zip_code} not found in zip_dict"}
 
@@ -57,8 +58,10 @@ def predict(features: HouseFeatures):
 
     try:
         prediction = model.predict(input_df)[0]
-    except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"Missing column(s): {e.args[0]}")
+    except Exception as e:
+        print("Prediction error:", e)
+        traceback.print_exc()  # Print full traceback to console logs
+        raise HTTPException(status_code=500, detail="Internal server error during prediction")
 
     return {"predicted_price": round(float(prediction), 2)}
 

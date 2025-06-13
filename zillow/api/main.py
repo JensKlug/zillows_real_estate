@@ -17,11 +17,6 @@ from zillow.ml_logic.data import load_data, clean_data,convert_zipcode
 # Adjust path to include ml_logic location (two levels up from zillow/api/)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-# # Load raw data globally
-# rootpath = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-# house_df = pd.read_csv(f'{rootpath}/raw_data/realtor-data.csv')  # Path relative to zillow/api/
-# #calling data functions
-
 
 print("test")
 def preprocess(house_df):
@@ -97,12 +92,12 @@ def evaluate(X_test,y_test,model):
     print(f"✅ Evaluation - RMSE: ${rmse:,.2f}, MAE: ${mae:,.2f}, R²: {r2:.4f}")
     return metrics
 
-def pred(input_data):
+def make_prediction(input_data):
     """
     Make a prediction for a single house input.
     """
     # Load the trained model
-    model = load_model('model/xgboost_best_model.pkl')
+    model = load_model()
 
     # Prepare input data as a DataFrame
     columns = ['latitude', 'longitude', 'bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode']
@@ -121,7 +116,7 @@ if __name__ == '__main__':
     # Execute the workflow
     house_df = load_data()
     house_df = clean_data(house_df)
-    house_df = convert_zipcode(house_df)
+    #house_df = convert_zipcode(house_df)
     cleaned_house_df = preprocess(house_df)
     model, X_test, y_test = train(cleaned_house_df)
     metrics = evaluate(X_test,y_test,model)
@@ -135,4 +130,4 @@ if __name__ == '__main__':
     "house_size": 2000,
     "ppsf_zipcode": 300,
     }
-    prediction = pred(sample_input)
+    prediction = make_prediction(sample_input)
