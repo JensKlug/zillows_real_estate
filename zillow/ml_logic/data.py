@@ -156,7 +156,7 @@ def prepare_user_input(user_input: dict, zip_dict: dict) -> pd.DataFrame:
     'acre_lot': user_input['acre_lot'],
     'house_size': user_input['house_size'],
     'ppsf_zipcode': zip_info.get('ppsf_zipcode'),
-}
+    }
 
     return pd.DataFrame([data])
 
