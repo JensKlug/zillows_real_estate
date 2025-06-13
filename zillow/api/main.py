@@ -78,9 +78,7 @@ def train(cleaned_house_df):
     model, history = train_model(X_train, y_train)
 
     # Save the best model
-    model_path = 'model/xgboost_best_model.pkl'
-    save_model(model, model_path)
-    # mlflow.log_artifact(model_path)
+    model_path = save_model(model)
     print(f"✅ Model trained and saved to {model_path}")
     return model, X_test, y_test
 

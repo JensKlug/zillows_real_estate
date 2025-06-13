@@ -1,6 +1,7 @@
 
 import os
 import glob
+import time
 import joblib
 from colorama import Fore, Style
 
@@ -39,14 +40,29 @@ def load_model(model_path=None):
         return None
 
 
-def save_model(model, path="model/xgboost_best_model.pkl"):
-    """
-    Save the trained model to a specified path and log the action.
-    """
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    joblib.dump(model, path)
-    print(Fore.GREEN + f"✅ Model saved to {path}" + Style.RESET_ALL)
-    return path
-# def load_model(path="model/xgboost_best_model.pkl"):
-#     return joblib.load(path)
-print("test")
+
+# def save_model(model):
+#     """
+#     Save the trained model to a specified path and log the action.
+#     """
+#     timestamp = time.strftime("%Y%m%d-%H%M%S")
+
+#     # Save model locally
+#     model_path = os.path.join(LOCAL_REGISTRY_PATH, "models", f"{timestamp}.h5")
+#     model.save(model_path)
+
+#     os.makedirs(os.path.dirname(model_path), exist_ok=True)
+#     joblib.dump(model, path)
+#     print(Fore.GREEN + f"✅ Model saved to {model_path}" + Style.RESET_ALL)
+#     return model_path
+
+def save_model(model) -> str:
+    from datetime import datetime
+    import os
+    import joblib
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_path = os.path.join("models", f"xgboost_model_{timestamp}.pkl")
+    joblib.dump(model, model_path)  # ✅ scikit-learn compatible saving
+    print(f"✅ Model saved to {model_path}")
+    return model_path
