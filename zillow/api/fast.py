@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
-from zillow.ml_logic.load_model import load_model
+from zillow.ml_logic.registry import load_model
 from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input
 from fastapi import HTTPException
 
