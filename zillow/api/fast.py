@@ -25,6 +25,7 @@ if model is None:
     #raise RuntimeError("❌ Could not load model.")
     print("⚠️ Model not found. API will respond with errors for prediction endpoints.")
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -70,7 +71,19 @@ def predict(features: HouseFeatures):
     return {"predicted_price": round(float(prediction), 2)}
 
 
-# # Trend Estimate for ZIP_CODE:
+
+
+
+# Trend Estimate for ZIP_CODE:
+
+
+
+
+df = pd.read_pickle("all_combine.pkl")
+
+# Clean/standardize columns
+df.columns = ["zip_code", "result1", "result3", "result6", "result12"]
+df["zip_code"] = df["zip_code"].astype(int)
 
 
 # # df = pd.read_pickle("all_combine.pkl") # Adjust the right path to this file.
@@ -91,9 +104,11 @@ def predict(features: HouseFeatures):
 #     if time_horizon not in [1, 3, 6, 12]:
 #         raise HTTPException(status_code=400, detail="Only 1, 3, 6, or 12 month horizons are supported")
 
+
 #     row = df[df["zipcode"] == zip_code]
 #     if row.empty:
 #         raise HTTPException(status_code=404, detail=f"No data found for ZIP code {zip_code}")
+
 
 #     col_name = f"result{time_horizon}"
 #     value = int(row.iloc[0][col_name])
