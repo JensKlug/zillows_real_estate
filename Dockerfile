@@ -16,8 +16,7 @@ COPY . .
 COPY raw_data raw_data
 
 # Expose port (default 8000)
-ENV PORT=8000
-EXPOSE $PORT
 
 # Start FastAPI app with uvicorn
-CMD ["uvicorn", "zillow.api.fast:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["uvicorn", "zillow.api.fast:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD uvicorn zillow.api.fast:app --host 0.0.0.0 --port $PORT
