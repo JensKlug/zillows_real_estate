@@ -6,6 +6,7 @@ import pandas as pd
 from zillow.ml_logic.registry import load_model
 from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input
 from fastapi import HTTPException
+import os
 
 
 # Load cleaned data
@@ -77,9 +78,13 @@ def predict(features: HouseFeatures):
 # Trend Estimate for ZIP_CODE:
 
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
+# Go up two levels to reach the root project directory
+project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
+forecast = os.path.join(project_root, 'raw_data',"all_combine.pkl")
 
-df = pd.read_pickle("/home/jensk/code/JensKlug/zillows_real_estate/raw_data/all_combine.pkl")
+df = pd.read_pickle(forecast)
 
 # Clean/standardize columns
 df.columns = ["zip_code", "result1", "result3", "result6", "result12"]
@@ -87,6 +92,7 @@ df["zip_code"] = df["zip_code"].astype(int)
 
 df["zip_code"] = df["zip_code"].astype(int) # Currently the zipcodes are saved as float numbers but integer is better in this case.
 
+from typing import Union
 
 class ZIP_CODE(BaseModel):
     time_horizon: int # 1 month, 3 months, 6 months, 12 months
@@ -102,7 +108,7 @@ def predict_investment(features: ZIP_CODE):
         raise HTTPException(status_code=400, detail="Only 1, 3, 6, or 12 month horizons are supported")
 
 
-    row = df[df["zipcode"] == zip_code]
+    row = df[df["zip_code"] == zip_code]
     if row.empty:
         raise HTTPException(status_code=404, detail=f"No data found for ZIP code {zip_code}")
 
