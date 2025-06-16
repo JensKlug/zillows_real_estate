@@ -1,3 +1,4 @@
+import os
 import traceback
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,13 +9,11 @@ from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare
 from fastapi import HTTPException
 
 
-# Load cleaned data
-data_df = load_data()
-cleaned_data_df = clean_data(data_df)
-
-# Create zip_dict at startup
-print("Columns in cleaned_data_df:", cleaned_data_df.columns.tolist())
-zip_dict = create_zip_dict(cleaned_data_df)
+base_dir = os.path.dirname(os.path.abspath(__file__))
+# Go up two levels to reach the root project directory
+project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
+zip_dict = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
+zip_dict = dict.read_pickle(zip_dict)
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
