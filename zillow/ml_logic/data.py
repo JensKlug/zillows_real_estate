@@ -12,7 +12,7 @@ from xgboost import XGBRegressor
 import joblib
 import os
 from datetime import datetime
-
+from sklearn.impute import SimpleImputer
 
 def load_data():
     # Always get the directory of the *current script file*
@@ -28,9 +28,15 @@ def load_data():
     area_df = pd.read_csv(area_path)
     house_df = pd.read_csv(house_path)
 
-    # Filter house_df by available zipcodes in area_df
-    unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
-    house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
+    #check initial row count
+    print(f"Initial rows in house_df: {len(house_df)}")
+
+    # # Filter house_df by available zipcodes in area_df
+    # unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
+    # house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
+
+    #check row count after filtering
+    print(f"Rows after zip code filter: {len(house_df)}")
 
     return house_df
 
@@ -40,17 +46,21 @@ def load_data():
 
 
 def clean_data(df):
+    print(f"Initial rows in clean_data: {len(df)}")
     # Drop columns 'brokered_by', 'status'
     df = df.drop(columns=['brokered_by', 'status'])
 
      # Drop duplicates
     df = df.drop_duplicates()
+    print(f"Rows after dropping duplicates: {len(df)}")
+
 
     # Drop columns 'street', 'city', 'state' and 'prev_sold_date'
     df = df.drop(columns=['street', 'city', 'state', 'prev_sold_date'])
 
     # Drop rows with NaN values from 'price'
     df = df.dropna(subset=['price'])
+    print(f"Rows after dropping NaN prices: {len(df)}")
 
     # Create list where 'bed' & 'bath' & 'house_size' are NaN
     nan_values = df[
@@ -58,15 +68,25 @@ def clean_data(df):
         (pd.isna(df['bath'])) &
         (pd.isna(df['house_size']))
     ]
+    print(f"Rows after dropping land sales (NaN bed, bath, house_size): {len(df)}")
 
     # Filter out rows that are in nan_values because we assume they are land sales
     df = df[~df.index.isin(nan_values.index)]
 
-    # Impute missing data
-    df['bed'] = df['bed'].fillna(df['bed'].median())
-    df['bath'] = df['bath'].fillna(df['bath'].median())
-    df['house_size'] = df['house_size'].fillna(df['house_size'].median())
-    df['acre_lot'] = df['acre_lot'].fillna(0)
+    # # Impute missing data
+    # df['bed'] = df['bed'].fillna(df['bed'].median())
+    # df['bath'] = df['bath'].fillna(df['bath'].median())
+    # df['house_size'] = df['house_size'].fillna(df['house_size'].median())
+    # df['acre_lot'] = df['acre_lot'].fillna(0)
+
+
+
+    # Define imputers for different strategies
+    imputer_median = SimpleImputer(strategy='median')
+    imputer_constant = SimpleImputer(strategy='constant', fill_value=0)
+    # Apply imputation to the respective columns
+    df[['bed', 'bath', 'house_size']] = imputer_median.fit_transform(df[['bed', 'bath', 'house_size']])
+    df['acre_lot'] = imputer_constant.fit_transform(df[['acre_lot']]).ravel()
 
     # Calculate PPSF
     df['ppsf'] = np.where(df['house_size'] > 0, round(df['price'] / df['house_size'], 2), 0)  # Avoid div by zero
@@ -86,6 +106,7 @@ def clean_data(df):
     # Convert zipcode into longitude and latitude
     df = convert_zipcode(df)
     df = df.dropna(subset=['latitude', 'longitude'])
+    print(f"Rows after dropping NaN latitude/longitude: {len(df)}")
 
 
 
@@ -113,6 +134,7 @@ def clean_data(df):
         (df['ppsf_zipcode'] > lower_ppsf_zipcode) &
         (df['ppsf_zipcode'] < upper_ppsf_zipcode)
         ]
+    print(f"Rows after outlier filtering: {len(df)}")
 
     return df
 
