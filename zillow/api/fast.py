@@ -72,9 +72,11 @@ def predict(features: HouseFeatures):
 
 # # Trend Estimate for ZIP_CODE:
 
+
 # # df = pd.read_pickle("all_combine.pkl") # Adjust the right path to this file.
 
 # df["zip_code"] = df["zip_code"].astype(int) # Currently the zipcodes are saved as float numbers but integer is better in this case.
+
 
 # class ZIP_CODE(BaseModel):
 #     time_horizon: int # 1 month, 3 months, 6 months, 12 months
