@@ -67,6 +67,36 @@ def predict(features: HouseFeatures):
 
 
 # Trend Estimate for ZIP_CODE:
+
+class ZIP_CODE(BaseModel):
+    time_horizon: int  # allowed: 1, 3, 6, 12
+    zip_code: int
+
+@app.post("/predict_investment")
+def predict_investment(features: ZIP_CODE):
+    zip_code = features.zip_code
+    time_horizon = features.time_horizon
+
+    if time_horizon not in [1, 3, 6, 12]:
+        raise HTTPException(status_code=400, detail="Only 1, 3, 6, or 12 month horizons are supported")
+
+    row = df[df["zip_code"] == zip_code]
+    if row.empty:
+        raise HTTPException(status_code=404, detail=f"No data found for ZIP code {zip_code}")
+
+    col_name = f"result{time_horizon}"
+    value = int(row.iloc[0][col_name])
+
+    return {
+        "zip_code": zip_code,
+        "time_horizon_months": time_horizon,
+        "is_good_investment": value
+    }
+
+
+
+
+'''
 class ZIP_CODE(BaseModel):
     time_horizon: int # 3 months, 6 months, 12 months
     zip_code: int
@@ -76,3 +106,4 @@ def predict_investment(features: ZIP_CODE):
     input_df = pd.DataFrame([features.model_dump()])
     prediction = model.predict(input_df)[0]
     return {"predicted_price": round(float(prediction), 2)}
+'''
