@@ -8,13 +8,15 @@ from zillow.ml_logic.registry import load_model
 from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input
 from fastapi import HTTPException
 import os
+import pickle
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 # Go up two levels to reach the root project directory
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
-zip_dict = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
-zip_dict = dict.read_pickle(zip_dict)
+zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
+with open(zip_dir, "rb") as file:
+    zip_dict = pickle.load(file)
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
