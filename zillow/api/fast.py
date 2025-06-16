@@ -25,6 +25,7 @@ if model is None:
     #raise RuntimeError("❌ Could not load model.")
     print("⚠️ Model not found. API will respond with errors for prediction endpoints.")
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -70,7 +71,15 @@ def predict(features: HouseFeatures):
     return {"predicted_price": round(float(prediction), 2)}
 
 
+'''
+
 # Trend Estimate for ZIP_CODE:
+
+df = pd.read_pickle("all_combine.pkl")
+
+# Clean/standardize columns
+df.columns = ["zip_code", "result1", "result3", "result6", "result12"]
+df["zip_code"] = df["zip_code"].astype(int)
 
 
 class ZIP_CODE(BaseModel):
@@ -98,6 +107,8 @@ def predict_investment(features: ZIP_CODE):
         "time_horizon_months": time_horizon,
         "is_good_investment": value
     }
+
+'''
 
 
 '''
