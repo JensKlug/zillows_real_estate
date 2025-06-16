@@ -79,45 +79,42 @@ def predict(features: HouseFeatures):
 
 
 
-df = pd.read_pickle("all_combine.pkl")
+df = pd.read_pickle("/home/jensk/code/JensKlug/zillows_real_estate/raw_data/all_combine.pkl")
 
 # Clean/standardize columns
 df.columns = ["zip_code", "result1", "result3", "result6", "result12"]
 df["zip_code"] = df["zip_code"].astype(int)
 
-
-# # df = pd.read_pickle("all_combine.pkl") # Adjust the right path to this file.
-
-# df["zip_code"] = df["zip_code"].astype(int) # Currently the zipcodes are saved as float numbers but integer is better in this case.
+df["zip_code"] = df["zip_code"].astype(int) # Currently the zipcodes are saved as float numbers but integer is better in this case.
 
 
-# class ZIP_CODE(BaseModel):
-#     time_horizon: int # 1 month, 3 months, 6 months, 12 months
-#     zip_code: int
+class ZIP_CODE(BaseModel):
+    time_horizon: int # 1 month, 3 months, 6 months, 12 months
+    zip_code: int
 
 
-# @app.post("/predict_investment")
-# def predict_investment(features: ZIP_CODE):
-#     zip_code = features.zip_code
-#     time_horizon = features.time_horizon
+@app.post("/predict_investment")
+def predict_investment(features: ZIP_CODE):
+    zip_code = features.zip_code
+    time_horizon = features.time_horizon
 
-#     if time_horizon not in [1, 3, 6, 12]:
-#         raise HTTPException(status_code=400, detail="Only 1, 3, 6, or 12 month horizons are supported")
-
-
-#     row = df[df["zipcode"] == zip_code]
-#     if row.empty:
-#         raise HTTPException(status_code=404, detail=f"No data found for ZIP code {zip_code}")
+    if time_horizon not in [1, 3, 6, 12]:
+        raise HTTPException(status_code=400, detail="Only 1, 3, 6, or 12 month horizons are supported")
 
 
-#     col_name = f"result{time_horizon}"
-#     value = int(row.iloc[0][col_name])
+    row = df[df["zipcode"] == zip_code]
+    if row.empty:
+        raise HTTPException(status_code=404, detail=f"No data found for ZIP code {zip_code}")
 
-#     return {
-#         "zip_code": zip_code,
-#         "time_horizon_months": time_horizon,
-#         "is_good_investment": value
-#     }
+
+    col_name = f"result{time_horizon}"
+    value = int(row.iloc[0][col_name])
+
+    return {
+        "zip_code": zip_code,
+        "time_horizon_months": time_horizon,
+        "is_good_investment": value
+    }
 
 
 # '''
