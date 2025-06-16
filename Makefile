@@ -119,5 +119,4 @@ docker_deploy:
 	gcloud run deploy \
 		--image $(DOCKER_IMAGE_PATH):prod \
 		--memory $(GAR_MEMORY) \
-		--region $(GCP_REGION) \
-		--env-vars-file .env.yaml
+		--region $(GCP_REGION)
