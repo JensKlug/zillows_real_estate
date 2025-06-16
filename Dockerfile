@@ -13,6 +13,7 @@ RUN pip install -r requirements.txt
 
 # Copy rest of the app source code
 COPY . .
+COPY raw_data raw_data
 
 # Expose port (default 8000)
 ENV PORT=8000
