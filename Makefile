@@ -44,9 +44,11 @@ gcloud-set-project:
 # i.e. linux/amd64 for Windows / Linux / Apple with Intel chip
 #      linux/arm64 for Apple with Apple Silicon (M1 / M2 chip)
 
+#1
 docker_build_local:
 	docker build --tag=$(DOCKER_IMAGE_NAME):local .
 
+#2
 docker_run_local:
 	docker run \
 		-e PORT=8000 -p $(DOCKER_LOCAL_PORT):8000 \
@@ -67,6 +69,7 @@ DOCKER_IMAGE_PATH := $(GCP_REGION)-docker.pkg.dev/$(GCP_PROJECT)/$(DOCKER_REPO_N
 docker_show_image_path:
 	@echo $(DOCKER_IMAGE_PATH)
 
+#3
 docker_build:
 	docker build \
 		--platform linux/amd64 \
@@ -79,6 +82,7 @@ docker_build_alternative:
 		--platform linux/amd64 \
 		-t $(DOCKER_IMAGE_PATH):prod .
 
+#4
 docker_run:
 	docker run \
 		--platform linux/amd64 \
@@ -96,18 +100,21 @@ docker_run_interactively:
 
 # Push and deploy to cloud
 
+#5 just in case
 docker_allow:
 	gcloud auth configure-docker $(GCP_REGION)-docker.pkg.dev
 
+#6
 docker_create_repo:
 	gcloud artifacts repositories create $(DOCKER_REPO_NAME) \
 		--repository-format=docker \
 		--location=$(GCP_REGION) \
 		--description="Repository for storing docker images"
-
+#7
 docker_push:
 	docker push $(DOCKER_IMAGE_PATH):prod
 
+#8
 docker_deploy:
 	gcloud run deploy \
 		--image $(DOCKER_IMAGE_PATH):prod \
