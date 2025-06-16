@@ -90,9 +90,6 @@ df = pd.read_pickle(forecast)
 df.columns = ["zip_code", "result1", "result3", "result6", "result12"]
 df["zip_code"] = df["zip_code"].astype(int)
 
-df["zip_code"] = df["zip_code"].astype(int) # Currently the zipcodes are saved as float numbers but integer is better in this case.
-
-from typing import Union
 
 class ZIP_CODE(BaseModel):
     time_horizon: int # 1 month, 3 months, 6 months, 12 months
