@@ -136,6 +136,8 @@ import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+import joblib
+from zillow.ml_logic.preprocessor import get_preprocessor, preprocess_features
 from zillow.ml_logic.model import train_model, evaluate_model
 from zillow.ml_logic.preprocessor import preprocess_features, get_preprocessor
 from zillow.ml_logic.registry import save_model, load_model
@@ -162,6 +164,9 @@ def preprocess(house_df):
     preprocessor = get_preprocessor()
     X_train_processed = preprocess_features(X_train, preprocessor, fit=True)
     X_test_processed = preprocess_features(X_test, preprocessor, fit=False)
+
+    joblib.dump(preprocessor, "models/preprocessor.pkl")
+    print("✅ Preprocessor saved to models/preprocessor.pkl")
 
     return X_train_processed, X_test_processed, y_train, y_test
 
