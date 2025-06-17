@@ -10,13 +10,16 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+import pickle
+
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 # Go up two levels to reach the root project directory
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
-zip_dict = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
-zip_dict = dict.read_pickle(zip_dict)
+zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
+with open(zip_dir, "rb") as file:
+    zip_dict = pickle.load(file)
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
