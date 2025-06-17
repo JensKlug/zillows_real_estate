@@ -31,9 +31,9 @@ def load_data():
     #check initial row count
     print(f"Initial rows in house_df: {len(house_df)}")
 
-    # # Filter house_df by available zipcodes in area_df
-    # unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
-    # house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
+    # Filter house_df by available zipcodes in area_df
+    unique_zipcodes_area_df = area_df['zipcode'].unique().tolist()
+    house_df = house_df[house_df['zip_code'].isin(unique_zipcodes_area_df)]
 
     #check row count after filtering
     print(f"Rows after zip code filter: {len(house_df)}")
@@ -94,14 +94,6 @@ def clean_data(df):
     df = df.merge(ppsf_median, on='zip_code', how='left')
 
 
-    # # Calculate PPSF for each row
-    # df['ppsf'] = round(df['price'] / df['house_size'], 2)
-
-    # # Calculate median PPSF per zip_code
-    # ppsf_median = df.groupby('zip_code')['ppsf'].median().reset_index(name='ppsf_zipcode')
-
-    # # Merge median PPSF back to df
-    # df = df.merge(ppsf_median, on='zip_code', how='left')
 
     # Convert zipcode into longitude and latitude
     df = convert_zipcode(df)
