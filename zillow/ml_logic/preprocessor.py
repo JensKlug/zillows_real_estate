@@ -81,4 +81,5 @@ def preprocess_features(input_df: pd.DataFrame, preprocessor: ColumnTransformer,
         X_processed = preprocessor.transform(df)
 
     print("✅ X_processed, with shape", X_processed.shape)
-    return X_processed
+    columns = ['latitude', 'longitude', 'bed', 'bath', 'acre_lot', 'house_size', 'ppsf_zipcode']
+    return pd.DataFrame(X_processed, columns=columns)
