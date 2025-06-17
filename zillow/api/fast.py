@@ -13,18 +13,21 @@ from fastapi.exceptions import RequestValidationError
 import pickle
 
 
-
+# Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
-# Go up two levels to reach the root project directory
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
+
+# Get the zipcode directory
 zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
 with open(zip_dir, "rb") as file:
     zip_dict = pickle.load(file)
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
+# Start api
 app = FastAPI()
 
+#Load model from google cloud console
 model = load_model()
 if model is None:
     #raise RuntimeError("❌ Could not load model.")
@@ -41,11 +44,20 @@ app.add_middleware(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    print("❌ Validation error:", exc)
-    print("📦 Request body:", await request.json())
+    try:
+        body = await request.json()
+    except:
+        body = "Could not read body"
+    tb = traceback.format_exc()
+
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors(), "body": await request.json()},
+        content={
+            "detail": exc.errors(),
+            "body": body,
+            "traceback": tb,
+            "message": "Validation failed. Check the request structure and field names."
+        },
     )
 
 @app.get("/")
@@ -86,8 +98,6 @@ def predict(features: HouseFeatures):
 
 
 # Trend Estimate for ZIP_CODE:
-base_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
 forecast = os.path.join(project_root, 'raw_data',"all_combine.pkl")
 df = pd.read_pickle(forecast)
 
