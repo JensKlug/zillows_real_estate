@@ -7,7 +7,9 @@ import pandas as pd
 from zillow.ml_logic.registry import load_model
 from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input
 from fastapi import HTTPException
-import os
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +35,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    print("❌ Validation error:", exc)
+    print("📦 Request body:", await request.json())
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "body": await request.json()},
+    )
 
 @app.get("/")
 def root():
@@ -71,18 +82,10 @@ def predict(features: HouseFeatures):
     return {"predicted_price": round(float(prediction), 2)}
 
 
-
-
-
 # Trend Estimate for ZIP_CODE:
-
-
 base_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Go up two levels to reach the root project directory
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
 forecast = os.path.join(project_root, 'raw_data',"all_combine.pkl")
-
 df = pd.read_pickle(forecast)
 
 # Clean/standardize columns
@@ -117,12 +120,3 @@ def predict_investment(features: ZIP_CODE):
         "time_horizon_months": time_horizon,
         "is_good_investment": value
     }
-
-
-# '''
-# @app.post("/predict_investment")
-# def predict_investment(features: ZIP_CODE):
-#     input_df = pd.DataFrame([features.model_dump()])
-#     prediction = model.predict(input_df)[0]
-#     return {"predicted_price": round(float(prediction), 2)}
-# '''
