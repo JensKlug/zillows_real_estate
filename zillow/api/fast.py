@@ -128,3 +128,15 @@ def predict_investment(features: ZIP_CODE):
 #     prediction = model.predict(input_df)[0]
 #     return {"predicted_price": round(float(prediction), 2)}
 # '''
+
+
+'''
+@get
+Just a get point which return a pickle dataframe.
+
+groupby functions will be done on the front end.
+
+We will filter in the backend.
+
+
+'''
