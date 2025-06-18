@@ -133,3 +133,9 @@ def predict_investment(features: ZIP_CODE):
         "time_horizon_months": time_horizon,
         "is_good_investment": value
     }
+
+@app.post("/get_data")
+def get_data(features: HouseFeatures):
+    zip_code = features.zip_code
+
+    return
