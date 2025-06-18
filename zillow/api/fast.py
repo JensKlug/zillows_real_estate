@@ -24,6 +24,14 @@ with open(zip_dir, "rb") as file:
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
+# Load CSV before app starts
+csv_path = os.path.join(project_root, 'raw_data', 'HouseTS.csv')
+try:
+    house_TS_df = pd.read_csv(csv_path)
+    print(f"✅ Loaded median_prices.csv with shape: {house_TS_df.shape}")
+except Exception as e:
+    print(f"❌ Failed to load median_prices.csv: {e}")
+
 # Start api
 app = FastAPI()
 
@@ -135,7 +143,7 @@ def predict_investment(features: ZIP_CODE):
     }
 
 @app.post("/get_data")
-def get_data(features: HouseFeatures):
+def get_data(features: HouseFeatures, df):
     zip_code = features.zip_code
-
-    return
+    df_city = get_df_city(df)
+    return df_city
