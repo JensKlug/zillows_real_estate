@@ -7,22 +7,32 @@ import pandas as pd
 from zillow.ml_logic.registry import load_model
 from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input
 from fastapi import HTTPException
-import os
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 import pickle
+import joblib
 
 
+
+# Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
-# Go up two levels to reach the root project directory
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
+
+# Get the zipcode directory
 zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
 with open(zip_dir, "rb") as file:
     zip_dict = pickle.load(file)
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
+# Start api
 app = FastAPI()
 
+#Load model from google cloud console
 model = load_model()
+preprocessor = joblib.load("models/preprocessor.pkl")
+print("✅ Preprocessor loaded.")
 if model is None:
     #raise RuntimeError("❌ Could not load model.")
     print("⚠️ Model not found. API will respond with errors for prediction endpoints.")
@@ -35,6 +45,24 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    try:
+        body = await request.json()
+    except:
+        body = "Could not read body"
+    tb = traceback.format_exc()
+
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "body": body,
+            "traceback": tb,
+            "message": "Validation failed. Check the request structure and field names."
+        },
+    )
 
 @app.get("/")
 def root():
@@ -49,6 +77,31 @@ class HouseFeatures(BaseModel):
     house_size: float
 
 @app.post("/predict")
+# def predict(features: HouseFeatures):
+#     data = features.model_dump()
+
+#     zip_code = data["zip_code"]
+#     if zip_code not in zip_dict:
+#         raise HTTPException(status_code=400, detail=f"Zip code {zip_code} not found in zip_dict")
+
+#     input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
+#     input_df = preprocessor.transform(input_df)
+
+
+#     print("Input DataFrame (before reordering):\n", input_df)
+
+#     try:
+#         input_df = input_df[model.feature_names_in_]  # Ensure correct column order
+#         print("Reordered DataFrame:\n", input_df)
+#         prediction = model.predict(input_df)[0]
+#         print("Prediction:", prediction)
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()  # 👈 shows full stack trace in logs
+#         raise HTTPException(status_code=500, detail="Internal server error during prediction")
+
+#     return {"predicted_price": round(float(prediction), 2)}
+
 def predict(features: HouseFeatures):
     data = features.model_dump()
 
@@ -58,33 +111,19 @@ def predict(features: HouseFeatures):
 
     input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
 
-    print("Input DataFrame (before reordering):\n", input_df)
-
     try:
-        input_df = input_df[model.feature_names_in_]  # Ensure correct column order
-        print("Reordered DataFrame:\n", input_df)
-        prediction = model.predict(input_df)[0]
+        input_scaled = preprocessor.transform(input_df)
+        prediction = model.predict(input_scaled)[0]
         print("Prediction:", prediction)
     except Exception as e:
-        import traceback
-        traceback.print_exc()  # 👈 shows full stack trace in logs
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Internal server error during prediction")
 
     return {"predicted_price": round(float(prediction), 2)}
 
 
-
-
-
 # Trend Estimate for ZIP_CODE:
-
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Go up two levels to reach the root project directory
-project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
 forecast = os.path.join(project_root, 'raw_data',"all_combine.pkl")
-
 df = pd.read_pickle(forecast)
 
 # Clean/standardize columns
@@ -121,6 +160,7 @@ def predict_investment(features: ZIP_CODE):
     }
 
 
+
 # '''
 # @app.post("/predict_investment")
 # def predict_investment(features: ZIP_CODE):
@@ -140,3 +180,5 @@ We will filter in the backend.
 
 
 '''
+
+
