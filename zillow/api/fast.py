@@ -131,7 +131,7 @@ def predict_investment(features: ZIP_CODE):
 
 
 '''
-@get
+@app.get()
 Just a get point which return a pickle dataframe.
 
 groupby functions will be done on the front end.
