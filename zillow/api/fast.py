@@ -12,17 +12,18 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import pickle
 import joblib
+from fastapi import Body
+
+#evrard
+from pydantic import BaseModel
 
 # Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
 
-# Get the zipcode directory
-zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
-with open(zip_dir, "rb") as file:
-    zip_dict = pickle.load(file)
-print(f"Loaded {len(zip_dict)} ZIP codes:")
-print(list(zip_dict.keys())[:20])
+
+class ZipRequest(BaseModel):
+    zip_code: str
 
 
 # Get the zipcode directory
@@ -39,6 +40,11 @@ try:
     print(f"✅ Loaded median_prices.csv with shape: {house_TS_df.shape}")
 except Exception as e:
     print(f"❌ Failed to load median_prices.csv: {e}")
+
+#evrard
+house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str).str.zfill(5)
+house_TS_df['date'] = pd.to_datetime(house_TS_df['date'])
+house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str)
 
 # Start api
 app = FastAPI()
@@ -173,14 +179,67 @@ def predict_investment(features: ZIP_CODE):
     }
 
 
+
+#Evrard
+@app.post("/zipcode_trend")
+def zipcode_trend(payload: ZipRequest):
+    zip_code = payload.zip_code
+
+    if not zip_code:
+        raise HTTPException(status_code=400, detail="Missing ZIP code")
+
+    filtered = house_TS_df[house_TS_df["zipcode"] == zip_code]
+
+    if filtered.empty:
+        return JSONResponse(content={"message": "No data found"}, status_code=404)
+
+    filtered = filtered.sort_values("date")
+    filtered['date'] = filtered['date'].astype(str)  # Convert datetime to string for JSON
+
+    return {
+        "zip_code": zip_code,
+        "trend": filtered[["date", "price"]].to_dict(orient="records")
+    }
+
+
+# @app.post("/get_data")
+# def get_data(features: HouseFeatures, df):
+#     zip_code = features.zip_code
+#     df_city = get_df_city(df)
+#     return df_city
+
+
+# # '''
+# # @app.post("/predict_investment")
+# # def predict_investment(features: ZIP_CODE):
+# #     input_df = pd.DataFrame([features.model_dump()])
+# #     prediction = model.predict(input_df)[0]
+# #     return {"predicted_price": round(float(prediction), 2)}
+# # '''
+
+
+# df_for_frontent = get_df_city(df, zipcode)
+
+
+
+
+'''
+@app.get()
+Just a get point which return a pickle dataframe.
+
+groupby functions will be done on the front end.
+
 @app.get('/filter_city')
 def filter_city(zip_code: str):
     df_one_city_frontend = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
     return {'data': df_one_city_frontend.to_dict('records')}
 
 
+We will filter in the backend.
+
 @app.get('/price_all_cities')
 def price_all_cities():
     df_all_cities_frontend = get_df_all_cities(house_TS_df) # get the dataframe to make a comparison over the US.
     return {'data': df_all_cities_frontend.to_dict('records')}
 
+'''
