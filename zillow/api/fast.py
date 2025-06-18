@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 from zillow.ml_logic.registry import load_model
-from zillow.ml_logic.data import load_data, create_zip_dict, clean_data, prepare_user_input, get_df_one_city, get_df_all_cities
+from zillow.ml_logic.data import get_df_yearly_data, load_data, create_zip_dict, clean_data, prepare_user_input, get_df_one_city, get_df_all_cities
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -20,11 +20,6 @@ from pydantic import BaseModel
 # Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
-
-
-class ZipRequest(BaseModel):
-    zip_code: str
-
 
 # Get the zipcode directory
 zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
@@ -41,10 +36,6 @@ try:
 except Exception as e:
     print(f"❌ Failed to load median_prices.csv: {e}")
 
-#evrard
-house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str).str.zfill(5)
-house_TS_df['date'] = pd.to_datetime(house_TS_df['date'])
-house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str)
 
 # Start api
 app = FastAPI()
@@ -178,7 +169,8 @@ def predict_investment(features: ZIP_CODE):
         "is_good_investment": value
     }
 
-
+class ZipRequest(BaseModel):
+    zip_code: str
 
 #Evrard
 @app.post("/zipcode_trend")
@@ -201,33 +193,18 @@ def zipcode_trend(payload: ZipRequest):
         "trend": filtered[["date", "price"]].to_dict(orient="records")
     }
 
+@app.post('/yearly_price_evolution')
+def yearly_price_evolution(zip_code: str):
+    df_yearly = get_df_yearly_data(house_TS_df, zip_code)
+    return {'data': df_yearly.to_dict('records')}
 
-# @app.post("/get_data")
-# def get_data(features: HouseFeatures, df):
-#     zip_code = features.zip_code
-#     df_city = get_df_city(df)
-#     return df_city
-
-
-# # '''
-# # @app.post("/predict_investment")
-# # def predict_investment(features: ZIP_CODE):
-# #     input_df = pd.DataFrame([features.model_dump()])
-# #     prediction = model.predict(input_df)[0]
-# #     return {"predicted_price": round(float(prediction), 2)}
-# # '''
 
 
 # df_for_frontent = get_df_city(df, zipcode)
 
-
-
-
-'''
-@app.get()
-Just a get point which return a pickle dataframe.
-
-groupby functions will be done on the front end.
+#@app.get()
+#Just a get point which return a pickle dataframe.
+#groupby functions will be done on the front end.
 
 @app.get('/filter_city')
 def filter_city(zip_code: str):
@@ -235,11 +212,7 @@ def filter_city(zip_code: str):
     return {'data': df_one_city_frontend.to_dict('records')}
 
 
-We will filter in the backend.
-
 @app.get('/price_all_cities')
 def price_all_cities():
     df_all_cities_frontend = get_df_all_cities(house_TS_df) # get the dataframe to make a comparison over the US.
     return {'data': df_all_cities_frontend.to_dict('records')}
-
-'''
