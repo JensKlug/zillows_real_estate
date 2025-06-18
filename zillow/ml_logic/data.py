@@ -216,7 +216,8 @@ def convert_zipcode(df):
 
 
 def get_df_one_city(house_TS_df, zipcode):
-    city = house_TS_df.loc[house_TS_df['zipcode'] == zipcode, 'city'][0] # City with upto 3 letters as a string.
+    house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str).str.zfill(5)
+    city = house_TS_df[house_TS_df['zipcode'] == zipcode].city.values[0]# City with upto 3 letters as a string.
     df_one_city = house_TS_df[house_TS_df['city'] == city][['date','price']]
 
     return df_one_city # might have a size of ~ 675 KB -> so every time less than 1 MB.
@@ -228,12 +229,14 @@ def get_df_all_cities(house_TS_df):
     return df_grouped_by_city_date_mean # This has a size of memory usage: 100.0+ KB.
 
 def get_df_yearly_data(house_TS_df, zipcode):
+
     house_TS_df['date'] = pd.to_datetime(house_TS_df['date'])  # if not already
     house_TS_df['year'] = house_TS_df['date'].dt.year
 
     dfprice_yearly = house_TS_df.groupby(['city', 'zipcode', 'year'])[
     ['median_sale_price','Median Home Value']].mean().reset_index()
-    zipcode_price_evolution=dfprice_yearly[dfprice_yearly['zipcode'] == zipcode]
+    dfprice_yearly['zipcode'] = dfprice_yearly['zipcode'].astype(str).str.zfill(5)
+    zipcode_price_evolution = dfprice_yearly[dfprice_yearly['zipcode'] == zipcode]
 
     return zipcode_price_evolution #528.0+ bytes
 
@@ -249,4 +252,3 @@ def df_for_zipcode_graph(df: pd.DataFrame) -> pd.DataFrame:
     df['zipcode'] = df['zipcode'].astype(str).str.zfill(5)
     df['date'] = pd.to_datetime(df['date'])
     return df
-

@@ -224,7 +224,7 @@ def zipcode_trend(payload: ZipRequest):
         "trend": filtered[["date", "price"]].to_dict(orient="records")
     }
 
-@app.post('/yearly_price_evolution')
+@app.get('/yearly_price_evolution')
 def yearly_price_evolution(zip_code: str):
     df_yearly = get_df_yearly_data(house_TS_df, zip_code)
     return {'data': df_yearly.to_dict('records')}
@@ -236,6 +236,7 @@ def yearly_price_evolution(zip_code: str):
 @app.get('/filter_city')
 def filter_city(zip_code: str):
     df_one_city_frontend = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
+
     return {'data': df_one_city_frontend.to_dict('records')}
 
 
