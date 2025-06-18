@@ -11,6 +11,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import pickle
+import joblib
+
 
 
 # Set base directory and project root
@@ -37,6 +39,8 @@ app = FastAPI()
 
 #Load model from google cloud console
 model = load_model()
+preprocessor = joblib.load("models/preprocessor.pkl")
+print("✅ Preprocessor loaded.")
 if model is None:
     #raise RuntimeError("❌ Could not load model.")
     print("⚠️ Model not found. API will respond with errors for prediction endpoints.")
@@ -81,6 +85,31 @@ class HouseFeatures(BaseModel):
     house_size: float
 
 @app.post("/predict")
+# def predict(features: HouseFeatures):
+#     data = features.model_dump()
+
+#     zip_code = data["zip_code"]
+#     if zip_code not in zip_dict:
+#         raise HTTPException(status_code=400, detail=f"Zip code {zip_code} not found in zip_dict")
+
+#     input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
+#     input_df = preprocessor.transform(input_df)
+
+
+#     print("Input DataFrame (before reordering):\n", input_df)
+
+#     try:
+#         input_df = input_df[model.feature_names_in_]  # Ensure correct column order
+#         print("Reordered DataFrame:\n", input_df)
+#         prediction = model.predict(input_df)[0]
+#         print("Prediction:", prediction)
+#     except Exception as e:
+#         import traceback
+#         traceback.print_exc()  # 👈 shows full stack trace in logs
+#         raise HTTPException(status_code=500, detail="Internal server error during prediction")
+
+#     return {"predicted_price": round(float(prediction), 2)}
+
 def predict(features: HouseFeatures):
     data = features.model_dump()
 
@@ -90,16 +119,12 @@ def predict(features: HouseFeatures):
 
     input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
 
-    print("Input DataFrame (before reordering):\n", input_df)
-
     try:
-        input_df = input_df[model.feature_names_in_]  # Ensure correct column order
-        print("Reordered DataFrame:\n", input_df)
-        prediction = model.predict(input_df)[0]
+        input_scaled = preprocessor.transform(input_df)
+        prediction = model.predict(input_scaled)[0]
         print("Prediction:", prediction)
     except Exception as e:
-        import traceback
-        traceback.print_exc()  # 👈 shows full stack trace in logs
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Internal server error during prediction")
 
     return {"predicted_price": round(float(prediction), 2)}
@@ -142,8 +167,14 @@ def predict_investment(features: ZIP_CODE):
         "is_good_investment": value
     }
 
+
 @app.post("/get_data")
 def get_data(features: HouseFeatures, df):
     zip_code = features.zip_code
     df_city = get_df_city(df)
     return df_city
+
+
+
+
+
