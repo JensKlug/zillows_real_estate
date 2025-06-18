@@ -168,13 +168,8 @@ def predict_investment(features: ZIP_CODE):
     }
 
 
-@app.post("/get_data")
+@app.post("/get_city_data")
 def get_data(features: HouseFeatures, df):
     zip_code = features.zip_code
     df_city = get_df_city(df)
     return df_city
-
-
-
-
-
