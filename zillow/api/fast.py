@@ -191,8 +191,14 @@ def get_data(features: HouseFeatures, df):
 # '''
 
 
-df_for_frontent = get_df_city(df, zipcode)
+@app.get() # here I'm not sure what to do...
+    df_one_city_frontend = get_df_one_city(house_TS_df, zipcode): # get the data frame to plot the trend for a metropolian area
 
+
+
+@app.get()
+
+    get_df_all_cities # get the dataframe to make a comparison over the US.
 
 
 
@@ -206,9 +212,3 @@ We will filter in the backend.
 
 
 '''
-
-
-
-
-
-
