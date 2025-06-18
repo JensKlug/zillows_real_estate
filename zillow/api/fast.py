@@ -158,3 +158,27 @@ def predict_investment(features: ZIP_CODE):
         "time_horizon_months": time_horizon,
         "is_good_investment": value
     }
+
+
+
+# '''
+# @app.post("/predict_investment")
+# def predict_investment(features: ZIP_CODE):
+#     input_df = pd.DataFrame([features.model_dump()])
+#     prediction = model.predict(input_df)[0]
+#     return {"predicted_price": round(float(prediction), 2)}
+# '''
+
+
+'''
+@app.get()
+Just a get point which return a pickle dataframe.
+
+groupby functions will be done on the front end.
+
+We will filter in the backend.
+
+
+'''
+
+
