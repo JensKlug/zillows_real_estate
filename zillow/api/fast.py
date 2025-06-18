@@ -91,32 +91,31 @@ class HouseFeatures(BaseModel):
     house_size: float
 
 @app.post("/predict")
-# def predict(features: HouseFeatures):
-#     data = features.model_dump()
-
-#     zip_code = data["zip_code"]
-#     if zip_code not in zip_dict:
-#         raise HTTPException(status_code=400, detail=f"Zip code {zip_code} not found in zip_dict")
-
-#     input_df = prepare_user_input(user_input=data, zip_dict=zip_dict)
-#     input_df = preprocessor.transform(input_df)
-
-
-#     print("Input DataFrame (before reordering):\n", input_df)
-
-#     try:
-#         input_df = input_df[model.feature_names_in_]  # Ensure correct column order
-#         print("Reordered DataFrame:\n", input_df)
-#         prediction = model.predict(input_df)[0]
-#         print("Prediction:", prediction)
-#     except Exception as e:
-#         import traceback
-#         traceback.print_exc()  # 👈 shows full stack trace in logs
-#         raise HTTPException(status_code=500, detail="Internal server error during prediction")
-
-#     return {"predicted_price": round(float(prediction), 2)}
-
 def predict(features: HouseFeatures):
+    """
+    Endpoint to predict house price based on user-provided features.
+
+    This function performs the following:
+        - Parses and validates input features using the HouseFeatures model.
+        - Checks if the provided zip code exists in the `zip_dict`.
+        - Prepares input data into a model-ready DataFrame using `prepare_user_input`.
+        - Transforms the data using the pre-fitted preprocessor.
+        - Runs the model to generate a price prediction.
+        - Returns the predicted price as a JSON response.
+
+    Args:
+        features (HouseFeatures): Input data model with attributes like
+            'bed', 'bath', 'acre_lot', 'zip_code', 'house_size'.
+
+    Returns:
+        dict: JSON response containing the predicted house price (rounded to two decimals).
+
+    Raises:
+        HTTPException:
+            - 400 if the zip code is not in `zip_dict`.
+            - 500 if an internal error occurs during prediction.
+    """
+
     data = features.model_dump()
 
     zip_code = data["zip_code"]
@@ -174,22 +173,6 @@ def predict_investment(features: ZIP_CODE):
     }
 
 
-@app.post("/get_data")
-def get_data(features: HouseFeatures, df):
-    zip_code = features.zip_code
-    df_city = get_df_city(df)
-    return df_city
-
-
-# '''
-# @app.post("/predict_investment")
-# def predict_investment(features: ZIP_CODE):
-#     input_df = pd.DataFrame([features.model_dump()])
-#     prediction = model.predict(input_df)[0]
-#     return {"predicted_price": round(float(prediction), 2)}
-# '''
-
-
 @app.get('/filter_city')
 def filter_city(zip_code: str):
     df_one_city_frontend = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
@@ -201,14 +184,3 @@ def price_all_cities():
     df_all_cities_frontend = get_df_all_cities(house_TS_df) # get the dataframe to make a comparison over the US.
     return {'data': df_all_cities_frontend.to_dict('records')}
 
-
-'''
-@app.get()
-Just a get point which return a pickle dataframe.
-
-groupby functions will be done on the front end.
-
-We will filter in the backend.
-
-
-'''
