@@ -208,6 +208,13 @@ def zipcode_trend(payload: ZipRequest):
 #     df_city = get_df_city(df)
 #     return df_city
 
+'''
+#jess
+@app.get('/yearly_price_evolution')
+def yearly_price_evolution(zip_code: str):
+    df_yearly = get_df_yearly_data(house_TS_df, zip_code)
+    return {'data': df_yearly.to_dict('records')}'''
+
 
 # # '''
 # # @app.post("/predict_investment")

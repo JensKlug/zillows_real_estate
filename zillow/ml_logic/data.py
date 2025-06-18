@@ -214,7 +214,7 @@ def convert_zipcode(df):
 
     return df
 
-  
+
 def get_df_one_city(house_TS_df, zipcode):
     city = house_TS_df.loc[house_TS_df['zipcode'] == zipcode, 'city'][0] # City with upto 3 letters as a string.
     df_one_city = house_TS_df[house_TS_df['city'] == city][['date','price']]
@@ -236,4 +236,3 @@ def get_df_yearly_data(house_TS_df, zipcode):
     zipcode_price_evolution=dfprice_yearly[dfprice_yearly['zipcode'] == zipcode]
 
     return zipcode_price_evolution #528.0+ bytes
-  
