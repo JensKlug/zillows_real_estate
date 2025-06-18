@@ -12,14 +12,13 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import pickle
 import joblib
+from fastapi import Body
 
+#evrard
+from pydantic import BaseModel
 
-# Get the zipcode directory
-zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
-with open(zip_dir, "rb") as file:
-    zip_dict = pickle.load(file)
-print(f"Loaded {len(zip_dict)} ZIP codes:")
-print(list(zip_dict.keys())[:20])
+class ZipRequest(BaseModel):
+    zip_code: str
 
 
 # Set base directory and project root
@@ -40,6 +39,11 @@ try:
     print(f"✅ Loaded median_prices.csv with shape: {house_TS_df.shape}")
 except Exception as e:
     print(f"❌ Failed to load median_prices.csv: {e}")
+
+#evrard
+house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str).str.zfill(5)
+house_TS_df['date'] = pd.to_datetime(house_TS_df['date'])
+house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str)
 
 # Start api
 app = FastAPI()
@@ -175,23 +179,45 @@ def predict_investment(features: ZIP_CODE):
     }
 
 
-@app.post("/get_data")
-def get_data(features: HouseFeatures, df):
-    zip_code = features.zip_code
-    df_city = get_df_city(df)
-    return df_city
+#Evrard
+@app.post("/zipcode_trend")
+def zipcode_trend(payload: ZipRequest):
+    zip_code = payload.zip_code
+
+    if not zip_code:
+        raise HTTPException(status_code=400, detail="Missing ZIP code")
+
+    filtered = house_TS_df[house_TS_df["zipcode"] == zip_code]
+
+    if filtered.empty:
+        return JSONResponse(content={"message": "No data found"}, status_code=404)
+
+    filtered = filtered.sort_values("date")
+    filtered['date'] = filtered['date'].astype(str)  # Convert datetime to string for JSON
+
+    return {
+        "zip_code": zip_code,
+        "trend": filtered[["date", "price"]].to_dict(orient="records")
+    }
 
 
-# '''
-# @app.post("/predict_investment")
-# def predict_investment(features: ZIP_CODE):
-#     input_df = pd.DataFrame([features.model_dump()])
-#     prediction = model.predict(input_df)[0]
-#     return {"predicted_price": round(float(prediction), 2)}
-# '''
+# @app.post("/get_data")
+# def get_data(features: HouseFeatures, df):
+#     zip_code = features.zip_code
+#     df_city = get_df_city(df)
+#     return df_city
 
 
-df_for_frontent = get_df_city(df, zipcode)
+# # '''
+# # @app.post("/predict_investment")
+# # def predict_investment(features: ZIP_CODE):
+# #     input_df = pd.DataFrame([features.model_dump()])
+# #     prediction = model.predict(input_df)[0]
+# #     return {"predicted_price": round(float(prediction), 2)}
+# # '''
+
+
+# df_for_frontent = get_df_city(df, zipcode)
 
 
 
@@ -206,9 +232,3 @@ We will filter in the backend.
 
 
 '''
-
-
-
-
-
-

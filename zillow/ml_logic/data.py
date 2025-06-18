@@ -209,8 +209,8 @@ def convert_zipcode(df):
 
 
 
-def get_df_city(zipcode):
-    df = pd.read_csv()
+# def get_df_city(zipcode):
+#     df = pd.read_csv()
 
 
-    return df_city
+#     return df_city
