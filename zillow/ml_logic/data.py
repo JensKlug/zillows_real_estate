@@ -238,4 +238,15 @@ def get_df_yearly_data(house_TS_df, zipcode):
     zipcode_price_evolution=dfprice_yearly[dfprice_yearly['zipcode'] == zipcode]
 
     return zipcode_price_evolution #528.0+ bytes
-  
+
+
+def df_for_zipcode_graph(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prepares the house time series DataFrame for ZIP code graphing:
+    - Converts 'zipcode' to 5-character strings (zero-padded)
+    - Parses 'date' column as datetime
+    """
+    df = df.copy()
+    df['zipcode'] = df['zipcode'].astype(str).str.zfill(5)
+    df['date'] = pd.to_datetime(df['date'])
+    return df
