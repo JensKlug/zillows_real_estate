@@ -14,12 +14,15 @@ import pickle
 import joblib
 from fastapi import Body
 
+from zillow.ml_logic.data import df_for_zipcode_graph
+
 #evrard
 from pydantic import BaseModel
 
 # Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(base_dir, '..', '..'))
+
 
 # Get the zipcode directory
 zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
@@ -173,20 +176,48 @@ class ZipRequest(BaseModel):
     zip_code: str
 
 #Evrard
+# @app.post("/zipcode_trend")
+# def zipcode_trend(payload: ZipRequest):
+#     zip_code = payload.zip_code
+
+#     if not zip_code:
+#         raise HTTPException(status_code=400, detail="Missing ZIP code")
+
+#     filtered = house_TS_df[house_TS_df["zipcode"] == zip_code]
+
+#     if filtered.empty:
+#         return JSONResponse(content={"message": "No data found"}, status_code=404)
+
+#     filtered = filtered.sort_values("date")
+#     filtered['date'] = filtered['date'].astype(str)  # Convert datetime to string for JSON
+
+#     return {
+#         "zip_code": zip_code,
+#         "trend": filtered[["date", "price"]].to_dict(orient="records")
+#     }
+
+class ZipRequest(BaseModel):
+    zip_code: str
+
 @app.post("/zipcode_trend")
 def zipcode_trend(payload: ZipRequest):
-    zip_code = payload.zip_code
+    zip_code = payload.zip_code.strip()
 
     if not zip_code:
         raise HTTPException(status_code=400, detail="Missing ZIP code")
 
-    filtered = house_TS_df[house_TS_df["zipcode"] == zip_code]
+    # ✅ Clean the full DataFrame using the central function
+    cleaned_df = df_for_zipcode_graph(house_TS_df)
+
+    # ✅ Filter by ZIP code
+    filtered = cleaned_df[cleaned_df["zipcode"] == zip_code]
 
     if filtered.empty:
-        return JSONResponse(content={"message": "No data found"}, status_code=404)
+        return JSONResponse(content={"message": f"No data found for ZIP {zip_code}"}, status_code=404)
 
-    filtered = filtered.sort_values("date")
-    filtered['date'] = filtered['date'].astype(str)  # Convert datetime to string for JSON
+    # ✅ Sort + format dates
+    filtered = filtered.sort_values("date").copy()
+    filtered["date"] = filtered["date"].dt.strftime("%Y-%m-%d")
 
     return {
         "zip_code": zip_code,
