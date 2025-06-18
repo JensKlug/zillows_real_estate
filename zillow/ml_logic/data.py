@@ -205,3 +205,12 @@ def convert_zipcode(df):
     df['longitude'] = df['zip_code'].map(lambda x: coords_dict.get(x, {}).get('longitude'))
 
     return df
+
+
+
+
+def get_df_city(zipcode):
+    df = pd.read_csv()
+
+
+    return df_city

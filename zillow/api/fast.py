@@ -14,6 +14,13 @@ import pickle
 import joblib
 
 
+# Get the zipcode directory
+zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
+with open(zip_dir, "rb") as file:
+    zip_dict = pickle.load(file)
+print(f"Loaded {len(zip_dict)} ZIP codes:")
+print(list(zip_dict.keys())[:20])
+
 
 # Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -173,6 +180,33 @@ def get_data(features: HouseFeatures, df):
     zip_code = features.zip_code
     df_city = get_df_city(df)
     return df_city
+
+
+# '''
+# @app.post("/predict_investment")
+# def predict_investment(features: ZIP_CODE):
+#     input_df = pd.DataFrame([features.model_dump()])
+#     prediction = model.predict(input_df)[0]
+#     return {"predicted_price": round(float(prediction), 2)}
+# '''
+
+
+df_for_frontent = get_df_city(df, zipcode)
+
+
+
+
+'''
+@app.get()
+Just a get point which return a pickle dataframe.
+
+groupby functions will be done on the front end.
+
+We will filter in the backend.
+
+
+'''
+
 
 
 
