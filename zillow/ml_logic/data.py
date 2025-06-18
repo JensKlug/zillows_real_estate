@@ -223,3 +223,13 @@ def get_df_all_cities(house_TS_df):
     df_grouped_by_city_date_mean = house_TS_df.groupby(['city', 'date'])['price'].mean().reset_index()
 
     return df_grouped_by_city_date_mean # This has a size of memory usage: 100.0+ KB.
+
+def get_df_yearly_data(house_TS_df, zipcode):
+    house_TS_df['date'] = pd.to_datetime(house_TS_df['date'])  # if not already
+    house_TS_df['year'] = house_TS_df['date'].dt.year
+
+    dfprice_yearly = house_TS_df.groupby(['city', 'zipcode', 'year'])[
+    ['median_sale_price','Median Home Value']].mean().reset_index()
+    zipcode_price_evolution=dfprice_yearly[dfprice_yearly['zipcode'] == zipcode]
+
+    return zipcode_price_evolution #528.0+ bytes
