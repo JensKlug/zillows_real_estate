@@ -42,10 +42,31 @@ def load_data():
 
 
 
-
-
-
 def clean_data(df):
+    """
+    Clean and preprocess the input DataFrame for model training or prediction.
+
+    The function performs the following steps:
+        - Drops unnecessary columns: 'brokered_by', 'status', 'street', 'city', 'state', 'prev_sold_date'.
+        - Removes duplicate rows and rows with missing 'price'.
+        - Removes likely land sales where 'bed', 'bath', and 'house_size' are all NaN.
+        - Applies median imputation for 'bed', 'bath', and 'house_size'.
+        - Applies constant imputation (0) for 'acre_lot'.
+        - Computes price per square foot (PPSF) and adds the zip-code-level median as 'ppsf_zipcode'.
+        - Adds geographic features ('latitude', 'longitude') via the `convert_zipcode` function.
+        - Removes rows with missing latitude/longitude.
+        - Filters out outliers based on quantile thresholds for 'price', 'house_size', 'acre_lot', and 'ppsf_zipcode'.
+        - Filters out unrealistic values for 'bed' and 'bath'.
+
+    Args:
+        df (pd.DataFrame): Raw real estate data with features including
+            ['price', 'bed', 'bath', 'house_size', 'acre_lot', 'zip_code',
+            'brokered_by', 'status', 'street', 'city', 'state', 'prev_sold_date'].
+
+    Returns:
+        pd.DataFrame: Cleaned and filtered DataFrame ready for modeling.
+    """
+
     print(f"Initial rows in clean_data: {len(df)}")
     # Drop columns 'brokered_by', 'status'
     df = df.drop(columns=['brokered_by', 'status'])
@@ -53,7 +74,6 @@ def clean_data(df):
      # Drop duplicates
     df = df.drop_duplicates()
     print(f"Rows after dropping duplicates: {len(df)}")
-
 
     # Drop columns 'street', 'city', 'state' and 'prev_sold_date'
     df = df.drop(columns=['street', 'city', 'state', 'prev_sold_date'])
@@ -73,14 +93,6 @@ def clean_data(df):
     # Filter out rows that are in nan_values because we assume they are land sales
     df = df[~df.index.isin(nan_values.index)]
 
-    # # Impute missing data
-    # df['bed'] = df['bed'].fillna(df['bed'].median())
-    # df['bath'] = df['bath'].fillna(df['bath'].median())
-    # df['house_size'] = df['house_size'].fillna(df['house_size'].median())
-    # df['acre_lot'] = df['acre_lot'].fillna(0)
-
-
-
     # Define imputers for different strategies
     imputer_median = SimpleImputer(strategy='median')
     imputer_constant = SimpleImputer(strategy='constant', fill_value=0)
@@ -93,14 +105,10 @@ def clean_data(df):
     ppsf_median = df.groupby('zip_code')['ppsf'].median().reset_index(name='ppsf_zipcode')
     df = df.merge(ppsf_median, on='zip_code', how='left')
 
-
-
     # Convert zipcode into longitude and latitude
     df = convert_zipcode(df)
     df = df.dropna(subset=['latitude', 'longitude'])
     print(f"Rows after dropping NaN latitude/longitude: {len(df)}")
-
-
 
     # Drop temporary ppsf column
     df = df.drop(columns=['ppsf'])
@@ -207,24 +215,14 @@ def convert_zipcode(df):
     return df
 
 
-
-
-
-
-
 def get_df_one_city(house_TS_df, zipcode):
-
-
     city = house_TS_df.loc[house_TS_df['zipcode'] == zipcode, 'city'][0] # City with upto 3 letters as a string.
-
-
     df_one_city = house_TS_df[house_TS_df['city'] == city][['date','price']]
 
     return df_one_city # might have a size of ~ 675 KB -> so every time less than 1 MB.
 
 
 def get_df_all_cities(house_TS_df):
-
     df_grouped_by_city_date_mean = house_TS_df.groupby(['city', 'date'])['price'].mean().reset_index()
 
     return df_grouped_by_city_date_mean # This has a size of memory usage: 100.0+ KB.
@@ -240,6 +238,7 @@ def get_df_yearly_data(house_TS_df, zipcode):
     return zipcode_price_evolution #528.0+ bytes
 
 
+
 def df_for_zipcode_graph(df: pd.DataFrame) -> pd.DataFrame:
     """
     Prepares the house time series DataFrame for ZIP code graphing:
@@ -250,3 +249,4 @@ def df_for_zipcode_graph(df: pd.DataFrame) -> pd.DataFrame:
     df['zipcode'] = df['zipcode'].astype(str).str.zfill(5)
     df['date'] = pd.to_datetime(df['date'])
     return df
+
