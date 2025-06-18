@@ -26,6 +26,14 @@ with open(zip_dir, "rb") as file:
 print(f"Loaded {len(zip_dict)} ZIP codes:")
 print(list(zip_dict.keys())[:20])
 
+# Load CSV before app starts
+csv_path = os.path.join(project_root, 'raw_data', 'HouseTS.csv')
+try:
+    house_TS_df = pd.read_csv(csv_path)
+    print(f"✅ Loaded median_prices.csv with shape: {house_TS_df.shape}")
+except Exception as e:
+    print(f"❌ Failed to load median_prices.csv: {e}")
+
 # Start api
 app = FastAPI()
 
@@ -160,25 +168,13 @@ def predict_investment(features: ZIP_CODE):
     }
 
 
-
-# '''
-# @app.post("/predict_investment")
-# def predict_investment(features: ZIP_CODE):
-#     input_df = pd.DataFrame([features.model_dump()])
-#     prediction = model.predict(input_df)[0]
-#     return {"predicted_price": round(float(prediction), 2)}
-# '''
+@app.post("/get_data")
+def get_data(features: HouseFeatures, df):
+    zip_code = features.zip_code
+    df_city = get_df_city(df)
+    return df_city
 
 
-'''
-@app.get()
-Just a get point which return a pickle dataframe.
 
-groupby functions will be done on the front end.
-
-We will filter in the backend.
-
-
-'''
 
 
