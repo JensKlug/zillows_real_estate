@@ -202,10 +202,6 @@ def yearly_price_evolution(zip_code: str):
 
 # df_for_frontent = get_df_city(df, zipcode)
 
-#@app.get()
-#Just a get point which return a pickle dataframe.
-#groupby functions will be done on the front end.
-
 @app.get('/filter_city')
 def filter_city(zip_code: str):
     df_one_city_frontend = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
