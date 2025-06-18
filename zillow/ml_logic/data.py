@@ -209,8 +209,17 @@ def convert_zipcode(df):
 
 
 
-def get_df_city(zipcode):
-    df = pd.read_csv()
+def get_df_one_city(house_TS_df, zipcode):
+
+    city = house_TS_df.loc[house_TS_df['zipcode'] == zipcode, 'city'][0] # City with upto 3 letters as a string.
+
+    df_one_city = house_TS_df[house_TS_df['city'] == city][['date','price']]
+
+    return df_one_city # might have a size of ~ 675 KB -> so every time less than 1 MB.
 
 
-    return df_city
+def get_df_all_cities(house_TS_df):
+
+    df_grouped_by_city_date_mean = house_TS_df.groupby(['city', 'date'])['price'].mean().reset_index()
+
+    return df_grouped_by_city_date_mean # This has a size of memory usage: 100.0+ KB.
