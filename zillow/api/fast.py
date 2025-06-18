@@ -14,6 +14,13 @@ import pickle
 import joblib
 
 
+# Get the zipcode directory
+zip_dir = os.path.join(project_root, 'raw_data',"zip_dict.pkl")
+with open(zip_dir, "rb") as file:
+    zip_dict = pickle.load(file)
+print(f"Loaded {len(zip_dict)} ZIP codes:")
+print(list(zip_dict.keys())[:20])
+
 
 # Set base directory and project root
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -170,6 +177,11 @@ def predict_investment(features: ZIP_CODE):
 # '''
 
 
+df_for_frontent = get_df_city(df, zipcode)
+
+
+
+
 '''
 @app.get()
 Just a get point which return a pickle dataframe.
@@ -180,5 +192,3 @@ We will filter in the backend.
 
 
 '''
-
-
