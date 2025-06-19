@@ -235,9 +235,9 @@ def yearly_price_evolution(zip_code: str):
 
 @app.get('/filter_city')
 def filter_city(zip_code: str):
-    df_one_city_frontend = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
+    df_one_city_frontend, city = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
 
-    return {'data': df_one_city_frontend.to_dict('records')}
+    return {'data': df_one_city_frontend.to_dict('records'), 'city': city}
 
 
 @app.get('/price_all_cities')
