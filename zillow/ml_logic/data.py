@@ -220,7 +220,7 @@ def get_df_one_city(house_TS_df, zipcode):
     city = house_TS_df[house_TS_df['zipcode'] == zipcode].city.values[0]# City with upto 3 letters as a string.
     df_one_city = house_TS_df[house_TS_df['city'] == city][['date','price']]
 
-    return df_one_city # might have a size of ~ 675 KB -> so every time less than 1 MB.
+    return df_one_city, city # might have a size of ~ 675 KB -> so every time less than 1 MB.
 
 
 def get_df_all_cities(house_TS_df):
