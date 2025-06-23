@@ -151,6 +151,31 @@ class ZIP_CODE(BaseModel):
 
 @app.post("/predict_investment")
 def predict_investment(features: ZIP_CODE):
+    """
+    Predict whether a given ZIP code is a good real estate investment over a specified time horizon.
+
+    The endpoint performs the following steps:
+        - Validates that the requested time horizon is one of the supported options: 1, 3, 6, or 12 months.
+        - Checks if data exists for the given ZIP code in the dataset.
+        - Retrieves the investment prediction result corresponding to the specified time horizon.
+        - Returns the ZIP code, time horizon, and a binary indicator whether it is a good investment.
+
+    Args:
+        features (ZIP_CODE): Input model containing:
+            - zip_code (str): Five-digit ZIP code to query.
+            - time_horizon (int): Investment horizon in months (1, 3, 6, or 12).
+
+    Raises:
+        HTTPException 400: If the time horizon is not one of the supported values.
+        HTTPException 404: If no data exists for the given ZIP code.
+
+    Returns:
+        dict: JSON response containing:
+            - zip_code (str): Queried ZIP code.
+            - time_horizon_months (int): Investment horizon in months.
+            - is_good_investment (int): Binary indicator (e.g., 1 or 0) denoting investment quality.
+    """
+
     zip_code = features.zip_code
     time_horizon = features.time_horizon
 
@@ -175,47 +200,51 @@ def predict_investment(features: ZIP_CODE):
 class ZipRequest(BaseModel):
     zip_code: str
 
-#Evrard
-# @app.post("/zipcode_trend")
-# def zipcode_trend(payload: ZipRequest):
-#     zip_code = payload.zip_code
-
-#     if not zip_code:
-#         raise HTTPException(status_code=400, detail="Missing ZIP code")
-
-#     filtered = house_TS_df[house_TS_df["zipcode"] == zip_code]
-
-#     if filtered.empty:
-#         return JSONResponse(content={"message": "No data found"}, status_code=404)
-
-#     filtered = filtered.sort_values("date")
-#     filtered['date'] = filtered['date'].astype(str)  # Convert datetime to string for JSON
-
-#     return {
-#         "zip_code": zip_code,
-#         "trend": filtered[["date", "price"]].to_dict(orient="records")
-#     }
-
 class ZipRequest(BaseModel):
     zip_code: str
 
 @app.post("/zipcode_trend")
 def zipcode_trend(payload: ZipRequest):
+    """
+    Retrieve the historical price trend for a specified ZIP code.
+
+    The endpoint performs the following steps:
+        - Validates that the ZIP code is provided and not empty.
+        - Cleans the full housing time series DataFrame using `df_for_zipcode_graph`.
+        - Filters the cleaned DataFrame for the requested ZIP code.
+        - Returns a 404 response if no data is found for the ZIP code.
+        - Sorts the data by date and formats the dates as 'YYYY-MM-DD'.
+        - Returns the ZIP code and a list of date-price pairs representing the price trend.
+
+    Args:
+        payload (ZipRequest): Input model containing:
+            - zip_code (str): Five-digit ZIP code string for which to fetch the trend.
+
+    Raises:
+        HTTPException 400: If the ZIP code is missing or empty.
+        JSONResponse 404: If no data is found for the given ZIP code.
+
+    Returns:
+        dict: JSON response with:
+            - zip_code (str): The queried ZIP code.
+            - trend (list of dict): List of records with 'date' (str) and 'price' (float) keys representing the price trend.
+    """
+
     zip_code = payload.zip_code.strip()
 
     if not zip_code:
         raise HTTPException(status_code=400, detail="Missing ZIP code")
 
-    # ✅ Clean the full DataFrame using the central function
+    # Clean the full DataFrame using the central function
     cleaned_df = df_for_zipcode_graph(house_TS_df)
 
-    # ✅ Filter by ZIP code
+    # Filter by ZIP code
     filtered = cleaned_df[cleaned_df["zipcode"] == zip_code]
 
     if filtered.empty:
         return JSONResponse(content={"message": f"No data found for ZIP {zip_code}"}, status_code=404)
 
-    # ✅ Sort + format dates
+    # Sort and format dates
     filtered = filtered.sort_values("date").copy()
     filtered["date"] = filtered["date"].dt.strftime("%Y-%m-%d")
 
@@ -226,15 +255,47 @@ def zipcode_trend(payload: ZipRequest):
 
 @app.get('/yearly_price_evolution')
 def yearly_price_evolution(zip_code: str):
+    """
+    Retrieve the yearly average sale price evolution for a given ZIP code.
+
+    The endpoint performs the following steps:
+        - Converts date columns to datetime and extracts the year.
+        - Groups data by city, ZIP code, and year to compute mean 'median_sale_price' and 'Median Home Value'.
+        - Filters the grouped data to return only the records for the specified ZIP code.
+
+    Args:
+        zip_code (str): Five-digit ZIP code string for which to fetch yearly price evolution.
+
+    Returns:
+        dict: JSON response containing:
+            - data (list of dict): List of yearly price records with keys
+            ['city', 'zipcode', 'year', 'median_sale_price', 'Median Home Value'].
+    """
+
     df_yearly = get_df_yearly_data(house_TS_df, zip_code)
     return {'data': df_yearly.to_dict('records')}
 
 
-
-# df_for_frontent = get_df_city(df, zipcode)
-
 @app.get('/filter_city')
 def filter_city(zip_code: str):
+    """
+    Retrieve daily average price data for the city corresponding to a given ZIP code.
+
+    The endpoint performs the following steps:
+        - Converts ZIP codes to standardized 5-digit strings.
+        - Finds the city associated with the given ZIP code.
+        - Filters the dataset to include only records from that city.
+        - Returns daily price data for the city to support trend plotting.
+
+    Args:
+        zip_code (str): Five-digit ZIP code string used to identify the city.
+
+    Returns:
+        dict: JSON response containing:
+            - data (list of dict): Daily price records with 'date' and 'price' keys.
+            - city (str): Name of the city corresponding to the ZIP code.
+    """
+
     df_one_city_frontend, city = get_df_one_city(house_TS_df, zip_code) # get the data frame to plot the trend for a metropolian area
 
     return {'data': df_one_city_frontend.to_dict('records'), 'city': city}
@@ -242,5 +303,18 @@ def filter_city(zip_code: str):
 
 @app.get('/price_all_cities')
 def price_all_cities():
+    """
+    Retrieve daily average housing prices grouped by city across all cities in the dataset.
+
+    The endpoint performs the following steps:
+        - Groups the dataset by 'city' and 'date'.
+        - Calculates the mean 'price' for each city on each date.
+        - Returns the aggregated data for comparison across cities.
+
+    Returns:
+        dict: JSON response containing:
+            - data (list of dict): Records with 'city', 'date', and average 'price'.
+    """
+
     df_all_cities_frontend = get_df_all_cities(house_TS_df) # get the dataframe to make a comparison over the US.
     return {'data': df_all_cities_frontend.to_dict('records')}

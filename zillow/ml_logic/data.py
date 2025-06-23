@@ -15,6 +15,18 @@ from datetime import datetime
 from sklearn.impute import SimpleImputer
 
 def load_data():
+    """
+    Load and filter raw real estate data from CSV files for further processing.
+
+    The function performs the following steps:
+        - Determines the absolute path to the project root directory.
+        - Loads raw data from 'HouseTS.csv' and 'realtor-data.csv' located in the 'raw_data' folder.
+        - Filters the house-level data to only include rows with zip codes present in the area-level dataset.
+        - Prints the number of rows in the house-level dataset before and after filtering.
+
+    Returns:
+        pd.DataFrame: Filtered house-level DataFrame containing only rows with valid zip codes.
+    """
     # Always get the directory of the *current script file*
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -184,6 +196,23 @@ def prepare_user_input(user_input: dict, zip_dict: dict) -> pd.DataFrame:
 
 
 def convert_zipcode(df):
+    """
+    Add geographic coordinates (latitude and longitude) to a DataFrame based on U.S. ZIP codes.
+
+    The function performs the following steps:
+        - Standardizes the 'zip_code' column as 5-digit strings.
+        - Uses the `pgeocode` library to retrieve latitude and longitude for each unique ZIP code.
+        - Creates a mapping of ZIP codes to coordinates.
+        - Adds 'latitude' and 'longitude' columns to the original DataFrame.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing a 'zip_code' column, where ZIP codes
+            are expected to be numeric or string representations of U.S. postal codes.
+
+    Returns:
+        pd.DataFrame: Original DataFrame with two additional columns: 'latitude' and 'longitude'.
+    """
+
     # Convert zip_code column to 5-digit string
     df['zip_code'] = df['zip_code'].astype(str).str.replace('\.0$', '', regex=True).str.zfill(5)
 
@@ -216,6 +245,26 @@ def convert_zipcode(df):
 
 
 def get_df_one_city(house_TS_df, zipcode):
+    """
+    Extract time series price data for a single city based on a provided ZIP code.
+
+    The function performs the following steps:
+        - Ensures the 'zipcode' column in the input DataFrame is standardized to 5-digit strings.
+        - Identifies the city corresponding to the given ZIP code.
+        - Filters the dataset to include only rows from the identified city.
+        - Returns a DataFrame with 'date' and 'price' columns for that city.
+
+    Args:
+        house_TS_df (pd.DataFrame): DataFrame containing time series housing data,
+            including at least the columns ['zipcode', 'city', 'date', 'price'].
+        zipcode (str): 5-digit ZIP code (as string) used to identify the city of interest.
+
+    Returns:
+        Tuple[pd.DataFrame, str]:
+            - DataFrame with 'date' and 'price' columns for all entries in the identified city.
+            - The name of the city associated with the input ZIP code.
+    """
+
     house_TS_df['zipcode'] = house_TS_df['zipcode'].astype(str).str.zfill(5)
     city = house_TS_df[house_TS_df['zipcode'] == zipcode].city.values[0]# City with upto 3 letters as a string.
     df_one_city = house_TS_df[house_TS_df['city'] == city][['date','price']]
@@ -224,11 +273,48 @@ def get_df_one_city(house_TS_df, zipcode):
 
 
 def get_df_all_cities(house_TS_df):
+    """
+    Aggregate average housing prices by city and date across the entire dataset.
+
+    The function performs the following steps:
+        - Groups the input DataFrame by 'city' and 'date'.
+        - Computes the mean 'price' for each city-date combination.
+        - Resets the index to return a flat DataFrame.
+
+    Args:
+        house_TS_df (pd.DataFrame): DataFrame containing time series housing data,
+            including at least the columns ['city', 'date', 'price'].
+
+    Returns:
+        pd.DataFrame: Aggregated DataFrame with columns ['city', 'date', 'price'],
+            where 'price' represents the average price for each city-date pair.
+    """
+
     df_grouped_by_city_date_mean = house_TS_df.groupby(['city', 'date'])['price'].mean().reset_index()
 
     return df_grouped_by_city_date_mean # This has a size of memory usage: 100.0+ KB.
 
 def get_df_yearly_data(house_TS_df, zipcode):
+    """
+    Generate yearly aggregated housing price data for a specific ZIP code.
+
+    The function performs the following steps:
+        - Converts the 'date' column to datetime format (if not already).
+        - Extracts the year from the 'date' column.
+        - Groups the data by 'city', 'zipcode', and 'year', calculating the mean of
+          'median_sale_price' and 'Median Home Value'.
+        - Standardizes ZIP codes to 5-digit strings.
+        - Filters the grouped data to only include records for the specified ZIP code.
+
+    Args:
+        house_TS_df (pd.DataFrame): DataFrame containing time series housing data,
+            including the columns ['date', 'city', 'zipcode', 'median_sale_price', 'Median Home Value'].
+        zipcode (str): 5-digit ZIP code (as string) for which to retrieve yearly aggregated data.
+
+    Returns:
+        pd.DataFrame: Yearly-aggregated DataFrame for the given ZIP code, with columns:
+            ['city', 'zipcode', 'year', 'median_sale_price', 'Median Home Value'].
+    """
 
     house_TS_df['date'] = pd.to_datetime(house_TS_df['date'])  # if not already
     house_TS_df['year'] = house_TS_df['date'].dt.year

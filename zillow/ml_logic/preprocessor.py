@@ -48,8 +48,19 @@ import numpy as np
 
 def get_preprocessor():
     """
-    Define and return the preprocessor used to scale the input features.
+    Define and return a column-wise preprocessing pipeline for feature scaling.
+
+    The function creates a `ColumnTransformer` that applies:
+        - `StandardScaler` to 'latitude' and 'longitude' (to normalize geographic coordinates).
+        - `RobustScaler` to 'bed', 'bath', 'acre_lot', 'house_size', and 'ppsf_zipcode'
+          (to reduce the influence of outliers in these features).
+
+    All other columns are dropped by default (`remainder='drop'`).
+
+    Returns:
+        ColumnTransformer: Preprocessing pipeline ready to be used in a modeling pipeline.
     """
+
     preprocessor = ColumnTransformer(
         transformers=[
             ('std', StandardScaler(), ['latitude', 'longitude']),
